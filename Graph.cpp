@@ -17,6 +17,34 @@ Graph::Graph(){
 
 }
 
+void Graph::buildGraph(){
+    std::ifstream file("courses.csv");
+    if(!file.is_open()){
+        std::cerr << "Error opening file!" << std::endl;
+        return;
+    }
+
+    adj.clear();
+
+    std::string line = "";
+    while(std::getline(file, line)){
+        std::stringstream ss(line);
+        std::string course_id;
+        std::getline(ss, course_id, ',');
+
+        if (course_id == "id" || course_id.empty()) {
+            continue;
+        }
+
+        adj[course_id];
+        std::vector<std::string> prereqs = grabPreReqs(course_id);
+        for (const std::string& prereq : prereqs) {
+            adj[prereq].push_back(course_id);
+        }
+    }
+
+}
+
 int Graph::CountPaths(std::string start, std::string end) { //bfs to find the shortest path between two courses
     std::unordered_map<std::string, bool> visited;
     std::unordered_map<std::string, int> distance;
