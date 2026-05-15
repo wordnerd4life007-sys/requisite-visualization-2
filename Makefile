@@ -3,7 +3,7 @@ TARGET_BASE ?= requisite-visualization
 
 ifeq ($(OS),Windows_NT)
 EXEEXT := .exe
-RUN_CMD = $(TARGET)
+RUN_CMD = ./$(TARGET)
 POWERSHELL := C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe
 CLEAN_CMD = "$(POWERSHELL)" -NoProfile -Command "Remove-Item -Force -ErrorAction SilentlyContinue '*.o','*.d','$(TARGET)'; exit 0"
 else

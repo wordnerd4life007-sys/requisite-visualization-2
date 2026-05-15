@@ -3,9 +3,18 @@
 #include <vector>
 #include <unordered_map>
 
+namespace {
+    std::string stripQuotes(const std::string& value) {
+        if (value.size() >= 2 && value.front() == '"' && value.back() == '"') {
+            return value.substr(1, value.size() - 2);
+        }
+
+        return value;
+    }
+}
 Graph::Graph(){
      adj = std::unordered_map<std::string, std::vector<std::string>>();
-     
+
 }
 
 int Graph::CountPaths(std::string start, std::string end) { //bfs to find the shortest path between two courses
@@ -48,18 +57,24 @@ std::vector<std::string> Graph::grabPreReqs(std::string id){
 
     while(std::getline(file, line)){
         std::stringstream ss(line);
-        std::string name, course_id, credits, college, prereq_str;
-        std::getline(ss, name, ',');
+        std::string course_id, name, credits, college, prereq_str;
         std::getline(ss, course_id, ',');
+        std::getline(ss, name, ',');
         std::getline(ss, credits, ',');
         std::getline(ss, college, ',');
         std::getline(ss, prereq_str);
 
+        if (course_id == "id") {
+            continue;
+        }
+
         if(course_id == id){
-            std::stringstream prereq_ss(prereq_str);
+            std::stringstream prereq_ss(stripQuotes(prereq_str));
             std::string prereq;
             while(std::getline(prereq_ss, prereq, '|')){
-                prereqs.push_back(prereq);
+                if (!prereq.empty()) {
+                    prereqs.push_back(prereq);
+                }
             }
             break;
         }
