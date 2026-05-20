@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ArrowDownToLine, ArrowUpFromLine, BookOpen } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, BookOpen, HelpCircle } from 'lucide-react';
 import type { CourseDetail as CourseDetailType, CourseRelationshipResponse } from '../types';
 
 interface CourseDetailProps {
@@ -73,6 +73,7 @@ function CourseDetail({
             icon={<ArrowDownToLine aria-hidden="true" size={18} />}
             response={prerequisiteResponse}
             title="Prerequisites"
+            tooltipText="Each numbered group represents an alternative way to satisfy part of the prerequisite requirement. In most cases, completing one course or path from the listed group can satisfy that requirement for the selected course."
             onSelectCourse={onSelectCourse}
           />
 
@@ -81,6 +82,7 @@ function CourseDetail({
             icon={<ArrowUpFromLine aria-hidden="true" size={18} />}
             response={dependentResponse}
             title="Dependents"
+            tooltipText="Dependents are courses that may require the selected course. Grouping shows how the selected course connects to later course options or requirement paths."
             onSelectCourse={onSelectCourse}
           />
         </>
@@ -94,17 +96,32 @@ interface RelationshipSectionProps {
   icon: ReactNode;
   response: CourseRelationshipResponse | null;
   title: string;
+  tooltipText: string;
   onSelectCourse: (courseId: string) => void;
 }
 
-function RelationshipSection({ emptyText, icon, response, title, onSelectCourse }: RelationshipSectionProps) {
+function RelationshipSection({ emptyText, icon, response, title, tooltipText, onSelectCourse }: RelationshipSectionProps) {
   const groups = response?.groups ?? [];
+  const tooltipId = `${title.toLowerCase()}-relationship-help`;
 
   return (
     <section className="relationship-section">
       <div className="section-title">
         {icon}
         <h3>{title}</h3>
+        <span className="help-wrap">
+          <button
+            aria-describedby={tooltipId}
+            aria-label={`${title} help`}
+            className="help-trigger"
+            type="button"
+          >
+            <HelpCircle aria-hidden="true" size={15} />
+          </button>
+          <span className="help-tooltip" id={tooltipId} role="tooltip">
+            {tooltipText}
+          </span>
+        </span>
       </div>
 
       {groups.length === 0 ? (
@@ -112,16 +129,19 @@ function RelationshipSection({ emptyText, icon, response, title, onSelectCourse 
       ) : (
         <div className="group-stack">
           {groups.map((group, groupIndex) => (
-            <div className="prereq-group" key={`${title}-${groupIndex}`}>
-              <span className={`group-label ${group.type}`}>
-                {group.type === 'all' ? 'Required group' : 'Alternative group'}
+            <div className="prereq-group" key={`${title}-${group.groupIndex}-${groupIndex}`}>
+              <span
+                aria-label={`${title} group ${groupIndex + 1}; ${group.type === 'all' ? 'required' : 'alternative'} relationship group`}
+                className={`group-label ${group.type}`}
+              >
+                Group {groupIndex + 1}
               </span>
               <div className="option-row">
-                {group.options.map((option) => (
+                {group.options.map((option, optionIndex) => (
                   <button
                     className="course-chip"
                     disabled={option.external}
-                    key={`${title}-${groupIndex}-${option.courseId}`}
+                    key={`${title}-${groupIndex}-${optionIndex}-${option.courseId}`}
                     title={option.external ? 'External prerequisite' : `Select ${option.courseId}`}
                     type="button"
                     onClick={() => onSelectCourse(option.courseId)}

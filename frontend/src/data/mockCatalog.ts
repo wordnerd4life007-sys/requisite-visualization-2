@@ -8,7 +8,12 @@ import type {
   PrerequisiteGroup,
 } from '../types';
 
-export const courses: CourseDetail[] = [
+type MockPrerequisiteGroup = Omit<PrerequisiteGroup, 'groupIndex'> & { groupIndex?: number };
+type MockCourseDetail = Omit<CourseDetail, 'prerequisiteGroups'> & {
+  prerequisiteGroups: MockPrerequisiteGroup[];
+};
+
+const courseFixtures: MockCourseDetail[] = [
   {
     id: 'CMPSC 8',
     name: 'Introduction to Computer Science',
@@ -205,6 +210,14 @@ export const courses: CourseDetail[] = [
   },
 ];
 
+export const courses: CourseDetail[] = courseFixtures.map((course) => ({
+  ...course,
+  prerequisiteGroups: course.prerequisiteGroups.map((group, groupIndex) => ({
+    ...group,
+    groupIndex: group.groupIndex ?? groupIndex,
+  })),
+}));
+
 const courseById = new Map(courses.map((course) => [course.id, course]));
 
 export function getSubjects(): string[] {
@@ -255,6 +268,7 @@ export function getDependents(courseId: string): CourseRelationshipResponse {
       if (matchingOptions.length > 0) {
         groups.push({
           type: group.type,
+          groupIndex: group.groupIndex,
           options: [{ courseId: course.id, external: false }],
         });
       }
@@ -325,7 +339,7 @@ export function buildGraphResponse(
       return;
     }
 
-    course.prerequisiteGroups.forEach((group, groupIndex) => {
+    course.prerequisiteGroups.forEach((group) => {
       group.options.forEach((option) => {
         addNode(option.courseId, option.external);
         addEdge({
@@ -333,7 +347,7 @@ export function buildGraphResponse(
           to: courseId,
           relationship: 'prerequisite',
           groupType: group.type,
-          groupIndex,
+          groupIndex: group.groupIndex,
         });
 
         if (!option.external) {
@@ -351,7 +365,7 @@ export function buildGraphResponse(
     visitedDependents.add(`${courseId}:${remainingDepth}`);
 
     for (const course of courses) {
-      course.prerequisiteGroups.forEach((group, groupIndex) => {
+      course.prerequisiteGroups.forEach((group) => {
         group.options.forEach((option) => {
           if (option.courseId !== courseId) {
             return;
@@ -363,7 +377,7 @@ export function buildGraphResponse(
             to: course.id,
             relationship: 'dependent',
             groupType: group.type,
-            groupIndex,
+            groupIndex: group.groupIndex,
           });
           walkDependents(course.id, remainingDepth - 1);
         });

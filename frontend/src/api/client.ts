@@ -4,6 +4,7 @@ import type {
   CourseRelationshipResponse,
   CourseSummary,
   GraphDirection,
+  PrerequisiteGroupType,
   GraphResponse,
 } from '../types';
 
@@ -27,6 +28,40 @@ interface GraphParams {
   depth: number;
   subject?: string;
   colleges?: string[];
+}
+
+interface ApiPrerequisiteOption {
+  courseId?: unknown;
+  external?: unknown;
+}
+
+interface ApiPrerequisiteGroup {
+  groupType?: unknown;
+  groupIndex?: unknown;
+  options?: unknown;
+}
+
+interface ApiCourseDetail extends CourseSummary {
+  prerequisiteGroups?: unknown;
+}
+
+interface ApiPrerequisiteResponse {
+  courseId?: unknown;
+  groups?: unknown;
+  flattenedCourseIds?: unknown;
+}
+
+interface ApiDependentRelationship {
+  courseId?: unknown;
+  groupType?: unknown;
+  groupIndex?: unknown;
+  external?: unknown;
+}
+
+interface ApiDependentResponse {
+  courseId?: unknown;
+  relationships?: unknown;
+  flattenedCourseIds?: unknown;
 }
 
 export class ApiError extends Error {
@@ -61,18 +96,22 @@ export async function listCourses(params: CourseListParams = {}, signal?: AbortS
 }
 
 export async function getCourse(courseId: string, signal?: AbortSignal): Promise<CourseDetail> {
-  return normalizeCourseDetail(await fetchJson<CourseDetail>(`/courses/${encodeURIComponent(courseId)}`, {}, signal));
+  return normalizeCourseDetail(await fetchJson<ApiCourseDetail>(`/courses/${encodeURIComponent(courseId)}`, {}, signal));
 }
 
 export async function getPrerequisites(
   courseId: string,
   signal?: AbortSignal,
 ): Promise<CourseRelationshipResponse> {
-  return fetchJson<CourseRelationshipResponse>(`/courses/${encodeURIComponent(courseId)}/prerequisites`, {}, signal);
+  return normalizePrerequisiteResponse(
+    await fetchJson<ApiPrerequisiteResponse>(`/courses/${encodeURIComponent(courseId)}/prerequisites`, {}, signal),
+  );
 }
 
 export async function getDependents(courseId: string, signal?: AbortSignal): Promise<CourseRelationshipResponse> {
-  return fetchJson<CourseRelationshipResponse>(`/courses/${encodeURIComponent(courseId)}/dependents`, {}, signal);
+  return normalizeDependentResponse(
+    await fetchJson<ApiDependentResponse>(`/courses/${encodeURIComponent(courseId)}/dependents`, {}, signal),
+  );
 }
 
 export async function getGraph(params: GraphParams, signal?: AbortSignal): Promise<GraphResponse> {
@@ -155,10 +194,10 @@ function isApiErrorBody(payload: unknown): payload is ApiErrorBody {
   );
 }
 
-function normalizeCourseDetail(course: CourseDetail): CourseDetail {
+function normalizeCourseDetail(course: ApiCourseDetail): CourseDetail {
   return {
     ...normalizeCourseSummary(course),
-    prerequisiteGroups: course.prerequisiteGroups ?? [],
+    prerequisiteGroups: normalizeGroups(course.prerequisiteGroups),
   };
 }
 
@@ -171,6 +210,111 @@ function normalizeCourseSummary(course: CourseSummary): CourseSummary {
     department: course.department ?? null,
     subject: course.subject || course.id.split(' ')[0] || course.id,
   };
+}
+
+function normalizePrerequisiteResponse(response: ApiPrerequisiteResponse): CourseRelationshipResponse {
+  const courseId = typeof response.courseId === 'string' ? response.courseId : '';
+
+  return {
+    courseId,
+    groups: normalizeGroups(response.groups),
+    flattenedCourseIds: normalizeStringArray(response.flattenedCourseIds),
+  };
+}
+
+function normalizeDependentResponse(response: ApiDependentResponse): CourseRelationshipResponse {
+  const courseId = typeof response.courseId === 'string' ? response.courseId : '';
+  const relationships = Array.isArray(response.relationships) ? response.relationships : [];
+
+  return {
+    courseId,
+    groups: relationships.map((relationship, index) => normalizeDependentRelationship(relationship, index)),
+    flattenedCourseIds: normalizeStringArray(response.flattenedCourseIds),
+  };
+}
+
+function normalizeGroups(value: unknown): CourseRelationshipResponse['groups'] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.map((group, index) => normalizeGroup(group, index));
+}
+
+function normalizeGroup(value: unknown, index: number): CourseRelationshipResponse['groups'][number] {
+  if (!isObject(value)) {
+    throw new ApiError('Unexpected relationship group response.', 'invalid_response', 0);
+  }
+
+  const group = value as ApiPrerequisiteGroup;
+
+  return {
+    type: normalizeGroupType(group.groupType),
+    groupIndex: normalizeGroupIndex(group.groupIndex, index),
+    options: normalizeOptions(group.options),
+  };
+}
+
+function normalizeOptions(value: unknown): CourseRelationshipResponse['groups'][number]['options'] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.map((option) => {
+    if (!isObject(option)) {
+      throw new ApiError('Unexpected relationship option response.', 'invalid_response', 0);
+    }
+
+    const apiOption = option as ApiPrerequisiteOption;
+
+    if (typeof apiOption.courseId !== 'string') {
+      throw new ApiError('Unexpected relationship option response.', 'invalid_response', 0);
+    }
+
+    return {
+      courseId: apiOption.courseId,
+      external: Boolean(apiOption.external),
+    };
+  });
+}
+
+function normalizeDependentRelationship(value: unknown, index: number): CourseRelationshipResponse['groups'][number] {
+  if (!isObject(value)) {
+    throw new ApiError('Unexpected dependent relationship response.', 'invalid_response', 0);
+  }
+
+  const relationship = value as ApiDependentRelationship;
+
+  if (typeof relationship.courseId !== 'string') {
+    throw new ApiError('Unexpected dependent relationship response.', 'invalid_response', 0);
+  }
+
+  return {
+    type: normalizeGroupType(relationship.groupType),
+    groupIndex: normalizeGroupIndex(relationship.groupIndex, index),
+    options: [
+      {
+        courseId: relationship.courseId,
+        external: Boolean(relationship.external),
+      },
+    ],
+  };
+}
+
+function normalizeGroupType(value: unknown): PrerequisiteGroupType {
+  if (value === 'all' || value === 'any') {
+    return value;
+  }
+
+  throw new ApiError('Unexpected relationship group type.', 'invalid_response', 0);
+}
+
+function normalizeGroupIndex(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+function normalizeStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {

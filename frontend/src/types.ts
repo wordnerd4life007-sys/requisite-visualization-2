@@ -17,6 +17,7 @@ export interface PrerequisiteOption {
 
 export interface PrerequisiteGroup {
   type: PrerequisiteGroupType;
+  groupIndex: number;
   options: PrerequisiteOption[];
 }
 
