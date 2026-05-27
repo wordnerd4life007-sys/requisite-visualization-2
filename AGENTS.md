@@ -2,14 +2,34 @@
 
 Repository instructions for coding agents working on `requisite-visualization`.
 
+## PERSISTENT RULE LOADING
+
+AGENTS.md is not initialization-only context.
+
+Treat each incoming user message as a fresh instruction cycle:
+LOAD → SKIM → FILTER RELEVANT RULES → PLAN → EXECUTE
+
+Required checkpoints:
+
+- New user prompt
+- Before edits
+- Before tool calls
+- Before commits
+- Before branch operations
+- Before large refactors
+- Before autonomous multi-step execution
+
+Do not cache AGENTS.md mentally and assume it remains fully applied. Re-read relevant sections.
+
 ## Project Overview
 
 `requisite-visualization` is an early prototype for exploring UCSB course prerequisites. The intended product is a web app where students can search for a course, see direct and recursive prerequisites, inspect dependent courses, filter by academic unit, and eventually plan a path through courses or a degree sequence.
 
 Current state:
 
-- The C++ backend reads `backend/data/courses.csv`, parses grouped prerequisites through `PrerequisiteParser`, builds an in-memory catalog/graph, and serves a local read-only API through `backend/src/api/HttpServer.cpp`.
-- PostgreSQL schema, Docker Compose setup, and a dry-run-capable import script exist, but the running app does not yet depend on PostgreSQL.
+- The C++ backend defaults to `API_DATA_SOURCE=postgres`, snapshots imported PostgreSQL data into an in-memory catalog/graph, and serves a local read-only API through `backend/src/api/HttpServer.cpp`.
+- `API_DATA_SOURCE=csv` remains available for tests and local fallback work, reading `backend/data/courses.csv` or `COURSES_CSV_PATH`.
+- PostgreSQL schema, Docker Compose setup, and an import script are part of the runtime data path after CSV generation.
 - The executable in `backend/src/main.cpp` is currently a demo/test harness, not the final app runtime.
 - `backend/api/API_STRATEGY.md` defines the implemented first-pass JSON contracts and remaining planned endpoints such as `/paths`.
 - `frontend/` is a Vite React + TypeScript course explorer using Cytoscape and backend `fetch()` calls during normal runtime.
@@ -27,8 +47,8 @@ Target data flow:
 UCSB Coursedog catalog
   -> scripts/generate_courses_csv.py
   -> backend/data/courses.csv
-  -> optional PostgreSQL import
-  -> C++ catalog/API layer
+  -> PostgreSQL import
+  -> C++ catalog/API startup snapshot
   -> API
   -> React/TypeScript visualization with fetch-based data loading
 ```
@@ -211,6 +231,12 @@ Check DB connectivity and seed state:
 
 ```powershell
 .\scripts\test-db-connection.ps1
+```
+
+Apply the current schema to an existing PostgreSQL volume:
+
+```powershell
+.\scripts\apply-db-migration.ps1
 ```
 
 Dry-run the CSV-to-PostgreSQL import without connecting to a database:

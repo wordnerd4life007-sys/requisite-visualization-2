@@ -4,7 +4,7 @@ This document records current catalog and parser caveats for `requisite-visualiz
 
 ## Current Data Source
 
-Course data comes from UCSB Coursedog through `scripts/generate_courses_csv.py`. The script writes `backend/data/courses.csv`, which is consumed by the C++ API and the older graph demo.
+Course data comes from UCSB Coursedog through `scripts/generate_courses_csv.py`. The script writes `backend/data/courses.csv`, which is imported into PostgreSQL for the default C++ API runtime. `API_DATA_SOURCE=csv` can still consume the generated CSV directly for tests and local fallback work.
 
 The generated CSV is treated as generated data. Rewrite it only for catalog generation/import work.
 
@@ -82,4 +82,4 @@ python -m unittest discover -s tests/python
 mingw32-make test-cpp
 ```
 
-Future database integration checks should cover imported course count, group count, option count, sample OR-group courses, external prerequisite references, and blank/nonstandard credits.
+Database integration checks should cover imported course count, group count, option count, sample OR-group courses, external prerequisite references, and blank/nonstandard credits.

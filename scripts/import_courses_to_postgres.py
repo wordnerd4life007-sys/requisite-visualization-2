@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import os
 import re
 import subprocess
 import sys
@@ -18,6 +19,7 @@ REQUIRED_HEADERS = ["id", "name", "credits", "college", "prereqs"]
 OPTIONAL_METADATA_HEADERS = ["subject", "department"]
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CSV_PATH = REPO_ROOT / "backend" / "data" / "courses.csv"
+DEFAULT_ENV_PATH = REPO_ROOT / ".env"
 
 
 @dataclass(frozen=True)
@@ -311,6 +313,13 @@ def generate_sql(plan: ImportPlan) -> str:
                 option_rows,
             ).rstrip(),
             "",
+            "DELETE FROM courses AS existing",
+            "WHERE NOT EXISTS (",
+            "    SELECT 1",
+            "    FROM import_courses AS imported",
+            "    WHERE imported.id = existing.id",
+            ");",
+            "",
             "DELETE FROM course_prerequisite_options AS options",
             "USING import_courses AS imported",
             "WHERE options.course_id = imported.id;",
@@ -365,25 +374,68 @@ def generate_sql(plan: ImportPlan) -> str:
     )
 
 
+def read_dotenv(env_path: Path = DEFAULT_ENV_PATH) -> dict[str, str]:
+    values: dict[str, str] = {}
+    if not env_path.exists():
+        return values
+
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        name, value = line.split("=", 1)
+        name = name.strip()
+        value = value.strip().strip("\"'")
+        if name:
+            values[name] = value
+    return values
+
+
+def connection_value(name: str, dotenv: dict[str, str], fallback_name: str | None = None) -> str:
+    value = os.environ.get(name, "").strip()
+    if value:
+        return value
+    if name in dotenv and dotenv[name].strip():
+        return dotenv[name].strip()
+    if fallback_name is not None:
+        return connection_value(fallback_name, dotenv)
+    return ""
+
+
 def apply_with_psql(sql: str, args: argparse.Namespace) -> int:
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".sql", delete=False) as temp_file:
         temp_file.write(sql)
         temp_path = Path(temp_file.name)
 
+    dotenv = read_dotenv()
+    database_url = connection_value("DATABASE_URL", dotenv)
+    host = args.host or connection_value("DB_HOST", dotenv, "POSTGRES_HOST")
+    port = args.port or connection_value("DB_PORT", dotenv, "POSTGRES_PORT")
+    username = args.username or connection_value("DB_USER", dotenv, "POSTGRES_USER")
+    dbname = args.dbname or connection_value("DB_NAME", dotenv, "POSTGRES_DB")
+    password = connection_value("DB_PASSWORD", dotenv, "POSTGRES_PASSWORD")
+
     command = [args.psql]
-    if args.host:
-        command.extend(["--host", args.host])
-    if args.port:
-        command.extend(["--port", args.port])
-    if args.username:
-        command.extend(["--username", args.username])
-    if args.dbname:
-        command.extend(["--dbname", args.dbname])
+    if database_url and not any([args.host, args.port, args.username, args.dbname]):
+        command.append(database_url)
+    else:
+        if host:
+            command.extend(["--host", host])
+        if port:
+            command.extend(["--port", port])
+        if username:
+            command.extend(["--username", username])
+        if dbname:
+            command.extend(["--dbname", dbname])
     command.extend(args.psql_arg or [])
     command.extend(["-v", "ON_ERROR_STOP=1", "-f", str(temp_path)])
 
+    env = os.environ.copy()
+    if password and not env.get("PGPASSWORD"):
+        env["PGPASSWORD"] = password
+
     try:
-        completed = subprocess.run(command, check=False)
+        completed = subprocess.run(command, check=False, env=env)
         return completed.returncode
     finally:
         temp_path.unlink(missing_ok=True)

@@ -14,6 +14,7 @@ import socket
 import subprocess
 import sys
 import time
+import argparse
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
@@ -74,14 +75,28 @@ def wait_for_health(base_url: str, process: subprocess.Popen | None) -> dict:
     raise AssertionError(f"API server did not become healthy: {last_error}")
 
 
-def start_server() -> tuple[str, subprocess.Popen]:
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run API smoke checks.")
+    parser.add_argument(
+        "--data-source",
+        choices=("csv", "postgres"),
+        default="csv",
+        help="Data source to use when this script starts the API server. Ignored when API_BASE_URL is set.",
+    )
+    return parser.parse_args()
+
+
+def start_server(data_source: str) -> tuple[str, subprocess.Popen, bool]:
     if not API_BINARY.exists():
         raise AssertionError(f"API binary not found: {API_BINARY}. Run mingw32-make api first.")
 
     port = find_free_port()
     env = os.environ.copy()
     env["API_PORT"] = str(port)
-    env["COURSES_CSV_PATH"] = str(FIXTURE_CSV)
+    env["API_DATA_SOURCE"] = data_source
+    launched_fixture_server = data_source == "csv"
+    if launched_fixture_server:
+        env["COURSES_CSV_PATH"] = str(FIXTURE_CSV)
 
     process = subprocess.Popen(
         [str(API_BINARY)],
@@ -91,7 +106,7 @@ def start_server() -> tuple[str, subprocess.Popen]:
         stderr=subprocess.PIPE,
         text=True,
     )
-    return f"http://127.0.0.1:{port}", process
+    return f"http://127.0.0.1:{port}", process, launched_fixture_server
 
 
 def stop_server(process: subprocess.Popen | None) -> None:
@@ -117,6 +132,7 @@ def assert_course_summary(value: dict) -> str:
 
 
 def main() -> int:
+    args = parse_args()
     provided_base_url = os.environ.get("API_BASE_URL", "").strip()
     process: subprocess.Popen | None = None
     launched_fixture_server = False
@@ -124,8 +140,7 @@ def main() -> int:
     if provided_base_url:
         base_url = provided_base_url
     else:
-        base_url, process = start_server()
-        launched_fixture_server = True
+        base_url, process, launched_fixture_server = start_server(args.data_source)
 
     try:
         health = wait_for_health(base_url, process)

@@ -14,6 +14,7 @@ MKDIR_BUILD = "$(POWERSHELL)" -NoProfile -Command "New-Item -ItemType Directory 
 MKDIR_TARGET_DIR = "$(POWERSHELL)" -NoProfile -Command "New-Item -ItemType Directory -Force '$(@D)' | Out-Null"
 API_LDLIBS := -lws2_32
 MSYS2_UCRT_BIN ?= C:/msys64/ucrt64/bin
+PG_ROOT ?= C:/PROGRA~1/POSTGR~1/18
 ifneq ($(wildcard $(MSYS2_UCRT_BIN)/g++.exe),)
 export PATH := $(MSYS2_UCRT_BIN);$(PATH)
 endif
@@ -24,6 +25,22 @@ CLEAN_CMD = $(RM) -r $(BUILD_DIR)
 MKDIR_BUILD = mkdir -p $(BUILD_DIR)
 MKDIR_TARGET_DIR = mkdir -p $(@D)
 API_LDLIBS :=
+PG_ROOT ?=
+endif
+
+PG_INCLUDE_DIR ?= $(if $(PG_ROOT),$(PG_ROOT)/include,)
+PG_LIB_DIR ?= $(if $(PG_ROOT),$(PG_ROOT)/lib,)
+PG_CPPFLAGS := $(if $(PG_INCLUDE_DIR),-I$(PG_INCLUDE_DIR),)
+PG_LDFLAGS := $(if $(PG_LIB_DIR),-L$(PG_LIB_DIR),)
+ifeq ($(OS),Windows_NT)
+PG_LDLIBS ?= $(if $(PG_LIB_DIR),$(PG_LIB_DIR)/libpq.lib,-lpq)
+else
+PG_LDLIBS ?= -lpq
+endif
+ifeq ($(OS),Windows_NT)
+API_LDLIBS := $(PG_LDLIBS) $(API_LDLIBS) -lsecur32 -lcrypt32
+else
+API_LDLIBS := $(PG_LDLIBS) $(API_LDLIBS)
 endif
 
 TARGET ?= $(BUILD_DIR)/$(TARGET_BASE)$(EXEEXT)
@@ -39,6 +56,9 @@ API_SOURCES := \
 	$(SRC_DIR)/api/ApiHandlers.cpp \
 	$(SRC_DIR)/api/ApiJson.cpp \
 	$(SRC_DIR)/api/CsvCatalog.cpp \
+	$(SRC_DIR)/api/InMemoryCatalog.cpp \
+	$(SRC_DIR)/api/PostgresCatalog.cpp \
+	$(SRC_DIR)/DatabaseConfig.cpp \
 	$(SRC_DIR)/PrerequisiteParser.cpp
 APP_OBJECTS := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(APP_SOURCES))
 CORE_OBJECTS := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(CORE_SOURCES))
@@ -49,10 +69,10 @@ TEST_API_CATALOG_SOURCE := tests/cpp/test_api_catalog.cpp
 TEST_API_CATALOG_OBJECT := $(BUILD_DIR)/test_api_catalog.o
 DEPS := $(APP_OBJECTS:.o=.d) $(TEST_CPP_OBJECT:.o=.d) $(TEST_API_CATALOG_OBJECT:.o=.d) $(API_OBJECTS:.o=.d)
 
-CPPFLAGS ?= -MMD -MP -I$(INCLUDE_DIR)
+CPPFLAGS ?= -MMD -MP -I$(INCLUDE_DIR) $(PG_CPPFLAGS)
 CXXFLAGS ?= -std=c++17 -Wall -Wextra -pedantic -g
 
-.PHONY: all api clean run test test-api-smoke test-cpp test-python
+.PHONY: all api clean run test test-api-smoke test-api-smoke-postgres test-cpp test-python
 
 all: $(TARGET)
 
@@ -62,13 +82,13 @@ $(TARGET): $(APP_OBJECTS)
 api: $(API_TARGET)
 
 $(API_TARGET): $(API_OBJECTS)
-	$(CXX) $(API_OBJECTS) -o $@ $(API_LDLIBS)
+	$(CXX) $(API_OBJECTS) -o $@ $(PG_LDFLAGS) $(API_LDLIBS)
 
 $(TEST_CPP_TARGET): $(TEST_CPP_OBJECT) $(CORE_OBJECTS)
 	$(CXX) $(TEST_CPP_OBJECT) $(CORE_OBJECTS) -o $@
 
-$(TEST_API_CATALOG_TARGET): $(TEST_API_CATALOG_OBJECT) $(BUILD_DIR)/api/CsvCatalog.o $(BUILD_DIR)/PrerequisiteParser.o
-	$(CXX) $(TEST_API_CATALOG_OBJECT) $(BUILD_DIR)/api/CsvCatalog.o $(BUILD_DIR)/PrerequisiteParser.o -o $@
+$(TEST_API_CATALOG_TARGET): $(TEST_API_CATALOG_OBJECT) $(BUILD_DIR)/api/CsvCatalog.o $(BUILD_DIR)/api/InMemoryCatalog.o $(BUILD_DIR)/PrerequisiteParser.o
+	$(CXX) $(TEST_API_CATALOG_OBJECT) $(BUILD_DIR)/api/CsvCatalog.o $(BUILD_DIR)/api/InMemoryCatalog.o $(BUILD_DIR)/PrerequisiteParser.o -o $@
 
 $(BUILD_DIR):
 	$(MKDIR_BUILD)
@@ -97,6 +117,9 @@ test-python:
 
 test-api-smoke: api
 	$(PYTHON) tests/api/test_api_smoke.py
+
+test-api-smoke-postgres: api
+	$(PYTHON) tests/api/test_api_smoke.py --data-source postgres
 
 clean:
 	$(CLEAN_CMD)

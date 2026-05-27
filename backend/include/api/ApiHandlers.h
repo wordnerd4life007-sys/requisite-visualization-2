@@ -1,7 +1,6 @@
 #pragma once
 
-#include "api/ApiModels.h"
-#include "api/CsvCatalog.h"
+#include "api/Catalog.h"
 
 #include <string>
 #include <unordered_map>
@@ -13,12 +12,12 @@ class ApiHandlers {
 public:
     using QueryParams = std::unordered_map<std::string, std::vector<std::string>>;
 
-    explicit ApiHandlers(const CsvCatalog& catalog);
+    explicit ApiHandlers(const CourseCatalog& catalog);
 
     ApiResponse handleRequest(const std::string& method, const std::string& target) const;
 
 private:
-    const CsvCatalog& catalog_;
+    const CourseCatalog& catalog_;
 
     ApiResponse handleCourses(const QueryParams& query) const;
     ApiResponse handleCourseRoute(const std::string& path) const;

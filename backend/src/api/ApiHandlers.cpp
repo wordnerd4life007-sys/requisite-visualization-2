@@ -223,7 +223,7 @@ std::vector<std::string> uniqueStrings(const std::vector<std::string>& values) {
 
 } // namespace
 
-ApiHandlers::ApiHandlers(const CsvCatalog& catalog)
+ApiHandlers::ApiHandlers(const CourseCatalog& catalog)
     : catalog_(catalog) {}
 
 ApiResponse ApiHandlers::handleRequest(const std::string& method, const std::string& target) const {
@@ -310,7 +310,7 @@ ApiResponse ApiHandlers::handleCourseRoute(const std::string& path) const {
         return errorResponse(404, "not_found", "Endpoint not found.");
     }
 
-    const std::string courseId = CsvCatalog::normalizeCourseId(urlDecode(encodedId, false));
+    const std::string courseId = normalizeCourseId(urlDecode(encodedId, false));
     const CourseRecord* course = catalog_.findCourse(courseId);
     if (course == nullptr) {
         return errorResponse(404, "course_not_found", "Course not found.");
@@ -345,7 +345,7 @@ ApiResponse ApiHandlers::handleCourseRoute(const std::string& path) const {
 }
 
 ApiResponse ApiHandlers::handleGraph(const QueryParams& query) const {
-    const std::string courseId = CsvCatalog::normalizeCourseId(firstValue(query, "course"));
+    const std::string courseId = normalizeCourseId(firstValue(query, "course"));
     if (courseId.empty()) {
         return errorResponse(400, "missing_course", "The course query parameter is required.");
     }
@@ -370,12 +370,12 @@ ApiResponse ApiHandlers::handleGraph(const QueryParams& query) const {
 
     std::unordered_set<std::string> subjects;
     for (const std::string& subject : splitCommaValues(allValues(query, "subjects", "subject"))) {
-        subjects.insert(CsvCatalog::normalizeSubject(subject));
+        subjects.insert(normalizeSubject(subject));
     }
 
     std::unordered_set<std::string> colleges;
     for (const std::string& college : splitCommaValues(allValues(query, "colleges", "college"))) {
-        colleges.insert(CsvCatalog::normalizeCollege(college));
+        colleges.insert(normalizeCollege(college));
     }
 
     return jsonResponse(200, graphResponseJson(catalog_.graphFor(courseId, direction, depth, subjects, colleges)));
@@ -396,11 +396,11 @@ CourseSearchFilters ApiHandlers::parseCourseFilters(
     }
 
     for (const std::string& subject : splitCommaValues(allValues(query, "subjects", "subject"))) {
-        filters.subjects.insert(CsvCatalog::normalizeSubject(subject));
+        filters.subjects.insert(normalizeSubject(subject));
     }
 
     for (const std::string& college : splitCommaValues(allValues(query, "colleges", "college"))) {
-        filters.colleges.insert(CsvCatalog::normalizeCollege(college));
+        filters.colleges.insert(normalizeCollege(college));
     }
 
     return filters;
