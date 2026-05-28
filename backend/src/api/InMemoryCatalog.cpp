@@ -168,8 +168,6 @@ GraphResult InMemoryCatalog::graphFor(
     graph.direction = direction;
     graph.depth = depth;
 
-    std::queue<std::pair<std::string, int>> pending;
-    std::unordered_map<std::string, int> distances;
     std::unordered_set<std::string> nodesAdded;
     std::unordered_set<std::string> edgesAdded;
 
@@ -180,26 +178,28 @@ GraphResult InMemoryCatalog::graphFor(
     };
 
     const auto addEdge = [&](const GraphEdge& edge) {
-        const std::string key = edge.from + "\n" + edge.to + "\n" + edge.groupType + "\n" + std::to_string(edge.groupIndex);
+        const std::string key = edge.from + "\n" + edge.to + "\n" + edge.relationship + "\n"
+            + edge.groupType + "\n" + std::to_string(edge.groupIndex);
         if (edgesAdded.insert(key).second) {
             graph.edges.push_back(edge);
         }
     };
 
-    addNode(graph.rootCourseId);
-    pending.push({graph.rootCourseId, 0});
-    distances[graph.rootCourseId] = 0;
+    const auto traversePrerequisites = [&]() {
+        std::queue<std::pair<std::string, int>> prerequisitePending;
+        std::unordered_map<std::string, int> prerequisiteDistances;
+        prerequisitePending.push({graph.rootCourseId, 0});
+        prerequisiteDistances[graph.rootCourseId] = 0;
 
-    while (!pending.empty()) {
-        const std::string current = pending.front().first;
-        const int currentDepth = pending.front().second;
-        pending.pop();
+        while (!prerequisitePending.empty()) {
+            const std::string current = prerequisitePending.front().first;
+            const int currentDepth = prerequisitePending.front().second;
+            prerequisitePending.pop();
 
-        if (currentDepth >= depth) {
-            continue;
-        }
+            if (currentDepth >= depth) {
+                continue;
+            }
 
-        if (direction == "prerequisites" || direction == "both") {
             for (const PrerequisiteGroup& group : prerequisiteGroupsFor(current)) {
                 for (const PrerequisiteOption& option : group.options) {
                     if (!graphNodeAllowed(option.courseId, false, subjects, colleges)) {
@@ -209,29 +209,54 @@ GraphResult InMemoryCatalog::graphFor(
                     addNode(option.courseId);
                     addEdge({option.courseId, current, "prerequisite", group.groupType, group.groupIndex});
 
-                    if (distances.find(option.courseId) == distances.end()) {
-                        distances[option.courseId] = currentDepth + 1;
-                        pending.push({option.courseId, currentDepth + 1});
+                    if (prerequisiteDistances.find(option.courseId) == prerequisiteDistances.end()) {
+                        prerequisiteDistances[option.courseId] = currentDepth + 1;
+                        prerequisitePending.push({option.courseId, currentDepth + 1});
                     }
                 }
             }
         }
+    };
 
-        if (direction == "dependents" || direction == "both") {
+    const auto traverseDependents = [&]() {
+        std::queue<std::pair<std::string, int>> dependentPending;
+        std::unordered_map<std::string, int> dependentDistances;
+        dependentPending.push({graph.rootCourseId, 0});
+        dependentDistances[graph.rootCourseId] = 0;
+
+        while (!dependentPending.empty()) {
+            const std::string current = dependentPending.front().first;
+            const int currentDepth = dependentPending.front().second;
+            dependentPending.pop();
+
+            if (currentDepth >= depth) {
+                continue;
+            }
+
             for (const DependentRelationship& dependent : dependentsFor(current)) {
                 if (!graphNodeAllowed(dependent.courseId, false, subjects, colleges)) {
                     continue;
                 }
 
                 addNode(dependent.courseId);
-                addEdge({current, dependent.courseId, "prerequisite", dependent.groupType, dependent.groupIndex});
+                addEdge({current, dependent.courseId, "dependent", dependent.groupType, dependent.groupIndex});
 
-                if (distances.find(dependent.courseId) == distances.end()) {
-                    distances[dependent.courseId] = currentDepth + 1;
-                    pending.push({dependent.courseId, currentDepth + 1});
+                if (dependentDistances.find(dependent.courseId) == dependentDistances.end()) {
+                    dependentDistances[dependent.courseId] = currentDepth + 1;
+                    dependentPending.push({dependent.courseId, currentDepth + 1});
                 }
             }
         }
+    };
+
+    addNode(graph.rootCourseId);
+
+    if (direction == "prerequisites" || direction == "both") {
+        traversePrerequisites();
+    }
+
+    if (direction == "dependents" || direction == "both") {
+        traverseDependents();
     }
 
     return graph;

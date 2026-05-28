@@ -76,6 +76,37 @@ bool hasGraphEdge(
 
     return false;
 }
+
+bool hasGraphEdgeWithRelationship(
+    const api::GraphResult& graph,
+    const std::string& from,
+    const std::string& to,
+    const std::string& relationship,
+    const std::string& groupType,
+    int groupIndex
+) {
+    for (const api::GraphEdge& edge : graph.edges) {
+        if (edge.from == from
+            && edge.to == to
+            && edge.relationship == relationship
+            && edge.groupType == groupType
+            && edge.groupIndex == groupIndex) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool hasGraphNode(const api::GraphResult& graph, const std::string& courseId) {
+    for (const api::GraphNode& node : graph.nodes) {
+        if (node.id == courseId) {
+            return true;
+        }
+    }
+
+    return false;
+}
 } // namespace
 
 int main() {
@@ -122,6 +153,16 @@ int main() {
     expectTrue(
         "graph edge keeps second alternative group index",
         hasGraphEdge(graph, "ECE 139", "CMPSC 170", "any", 1)
+    );
+
+    const api::GraphResult bothGraph = catalog.graphFor("CMPSC 8", "both", 2, {}, {});
+    expectTrue(
+        "dependent graph edge is labeled dependent",
+        hasGraphEdgeWithRelationship(bothGraph, "CMPSC 8", "CMPSC 16", "dependent", "any", 0)
+    );
+    expectTrue(
+        "both graph does not include sibling prerequisites of a dependent",
+        !hasGraphNode(bothGraph, "ENGR 3") && !hasGraphNode(bothGraph, "ECE 3")
     );
 
     return failures == 0 ? 0 : 1;

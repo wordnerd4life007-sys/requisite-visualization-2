@@ -166,6 +166,8 @@ Graph response:
 }
 ```
 
+Graph edge `relationship` is `prerequisite` when the edge is part of the rooted prerequisite traversal and `dependent` when the edge is part of the rooted dependent traversal. A `both` graph is the union of those two rooted traversals; it does not expand from a dependent course back into that course's other prerequisites.
+
 Path response:
 
 ```json
