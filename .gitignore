@@ -1,5 +1,8 @@
+# Environment files
+.env
+.env.*
 *.env
-build/
+*.env.*build/
 *.d
 *.o
 *.obj
