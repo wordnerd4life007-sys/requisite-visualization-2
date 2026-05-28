@@ -18,6 +18,14 @@ const selectedNodeGlow = {
 };
 
 const hoverDelayMs = 250;
+const defaultGraphHeight = 430;
+const layoutHorizontalPadding = 56;
+const layoutVerticalPadding = 24;
+const layoutNodeDiameter = 66;
+const layoutColumnSpacing = 118;
+const layoutFirstLayerGap = 220;
+const layoutDistanceGap = 150;
+const layoutRowSpacing = 74;
 
 interface HoverInfo {
   course: CourseDetail | null;
@@ -45,6 +53,26 @@ interface NodePlacement {
   subject: string;
 }
 
+interface GraphLayout {
+  height: number;
+  positions: Map<string, { x: number; y: number }>;
+  rootX: number;
+  width: number;
+}
+
+interface LayoutBucket {
+  columnCount: number;
+  distance: number;
+  placements: NodePlacement[];
+  side: -1 | 1;
+  startX: number;
+}
+
+interface StageSize {
+  height: number;
+  width: number;
+}
+
 interface GraphExplorerProps {
   command: GraphCommand;
   error: string | null;
@@ -56,6 +84,8 @@ interface GraphExplorerProps {
 }
 
 function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, onSelectCourse }: GraphExplorerProps) {
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cyRef = useRef<Core | null>(null);
   const hoverAbortRef = useRef<AbortController | null>(null);
@@ -63,10 +93,15 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
   const hoverNodeIdRef = useRef<string | null>(null);
   const hoverTimerRef = useRef<number | null>(null);
   const [hoverPanel, setHoverPanel] = useState<HoverPanel | null>(null);
+  const [stageSize, setStageSize] = useState<StageSize>({ height: defaultGraphHeight, width: 0 });
+
+  const groupRanks = useMemo(() => groupRankByNode(graph), [graph]);
+  const structuredLayout = useMemo(
+    () => graphNodeLayout(graph, groupRanks, stageSize),
+    [graph, groupRanks, stageSize.height, stageSize.width],
+  );
 
   const elements = useMemo<ElementDefinition[]>(() => {
-    const groupRanks = groupRankByNode(graph);
-    const positions = graphNodePositions(graph, groupRanks);
     const dependentEdgeIds = dependentEdgeElementIds(graph);
 
     const nodeElements = graph.nodes.map((node) => ({
@@ -85,7 +120,7 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
         root: node.id === graph.rootCourseId,
         subject: node.subject ?? '',
       },
-      position: positions.get(node.id),
+      position: structuredLayout.positions.get(node.id),
     }));
 
     const edgeElements = graph.edges.map((edge, index) => {
@@ -107,7 +142,38 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
     });
 
     return [...nodeElements, ...edgeElements];
-  }, [graph]);
+  }, [graph, groupRanks, structuredLayout.positions]);
+
+  useEffect(() => {
+    const stage = stageRef.current;
+
+    if (!stage) {
+      return;
+    }
+
+    const measureStage = () => {
+      const rect = stage.getBoundingClientRect();
+      const nextSize = {
+        height: Math.max(defaultGraphHeight, Math.round(rect.height || defaultGraphHeight)),
+        width: Math.max(0, Math.round(rect.width || 0)),
+      };
+
+      setStageSize((current) =>
+        current.height === nextSize.height && current.width === nextSize.width ? current : nextSize,
+      );
+    };
+
+    measureStage();
+
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    const resizeObserver = new ResizeObserver(measureStage);
+    resizeObserver.observe(stage);
+
+    return () => resizeObserver.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!containerRef.current) {
@@ -334,7 +400,7 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
       const node = event.target;
       const courseId = node.id();
       const fallback = fallbackNodeFromElement(node);
-      const position = panelPosition(event, containerRef.current);
+      const position = panelPosition(event, stageRef.current, containerRef.current);
 
       hoverNodeIdRef.current = courseId;
       applyHoverFocus(cy, node);
@@ -378,7 +444,13 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
             hoverCacheRef.current.set(courseId, info);
 
             if (hoverNodeIdRef.current === courseId) {
-              setHoverPanel({ courseId, fallback, info, position: latestPanelPosition(node, containerRef.current), status: 'success' });
+              setHoverPanel({
+                courseId,
+                fallback,
+                info,
+                position: latestPanelPosition(node, stageRef.current, containerRef.current),
+                status: 'success',
+              });
             }
           })
           .catch((loadError: unknown) => {
@@ -395,7 +467,13 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
             hoverCacheRef.current.set(courseId, info);
 
             if (hoverNodeIdRef.current === courseId) {
-              setHoverPanel({ courseId, fallback, info, position: latestPanelPosition(node, containerRef.current), status: 'error' });
+              setHoverPanel({
+                courseId,
+                fallback,
+                info,
+                position: latestPanelPosition(node, stageRef.current, containerRef.current),
+                status: 'error',
+              });
             }
           });
       }, hoverDelayMs);
@@ -408,7 +486,7 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
         return;
       }
 
-      const position = panelPosition(event, containerRef.current);
+      const position = panelPosition(event, stageRef.current, containerRef.current);
       setHoverPanel((current) => (current && current.courseId === courseId ? { ...current, position } : current));
     });
 
@@ -422,26 +500,15 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
       }
     });
 
-    let resizeObserver: ResizeObserver | null = null;
-
-    if (typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(() => {
-        cy.resize();
-        requestFit(cy);
-      });
-      resizeObserver.observe(containerRef.current);
-    }
-
     cyRef.current = cy;
-    runGraphLayout(cy, graph);
+    runGraphLayout(cy, graph, structuredLayout, layoutMode, scrollRef.current);
 
     return () => {
       clearHover();
-      resizeObserver?.disconnect();
       cy.destroy();
       cyRef.current = null;
     };
-  }, [elements, layoutMode, onSelectCourse]);
+  }, [elements, graph, layoutMode, onSelectCourse, structuredLayout]);
 
   useEffect(() => {
     const cy = cyRef.current;
@@ -451,7 +518,7 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
     }
 
     if (command.action === 'fit') {
-      requestFit(cy);
+      requestGraphViewport(cy, graph, structuredLayout, layoutMode, scrollRef.current);
       return;
     }
 
@@ -470,21 +537,35 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
       cy.elements().unselect();
       cy.zoom(1);
       cy.pan({ x: 0, y: 0 });
-      runGraphLayout(cy, graph);
+      runGraphLayout(cy, graph, structuredLayout, layoutMode, scrollRef.current);
       return;
     }
 
     const nextZoom = command.action === 'zoom-in' ? cy.zoom() * 1.18 : cy.zoom() / 1.18;
+    const scrollElement = scrollRef.current;
+    const renderedPosition =
+      layoutMode === 'structured' && scrollElement
+        ? { x: scrollElement.scrollLeft + scrollElement.clientWidth / 2, y: cy.height() / 2 }
+        : { x: cy.width() / 2, y: cy.height() / 2 };
 
     cy.zoom({
       level: Math.min(cy.maxZoom(), Math.max(cy.minZoom(), nextZoom)),
-      renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 },
+      renderedPosition,
     });
-  }, [command]);
+  }, [command, graph, layoutMode, structuredLayout]);
+
+  const canvasStyle =
+    layoutMode === 'structured'
+      ? {
+          width: `${structuredLayout.width}px`,
+        }
+      : undefined;
 
   return (
-    <div className="graph-stage">
-      <div className="graph-canvas" ref={containerRef} />
+    <div className="graph-stage" ref={stageRef}>
+      <div className="graph-scroll" ref={scrollRef}>
+        <div className="graph-canvas" ref={containerRef} style={canvasStyle} />
+      </div>
 
       {hoverPanel ? <HoverInspectionPanel panel={hoverPanel} /> : null}
 
@@ -628,18 +709,70 @@ function dependentEdgeElementIds(graph: GraphResponse): Set<string> {
   return dependentIds;
 }
 
-function runGraphLayout(cy: Core, graph: GraphResponse) {
-  const positions = graphNodePositions(graph, groupRankByNode(graph));
-
+function runGraphLayout(
+  cy: Core,
+  graph: GraphResponse,
+  graphLayout: GraphLayout,
+  layoutMode: GraphLayoutMode,
+  scrollElement: HTMLDivElement | null,
+) {
   cy.nodes().forEach((node) => {
-    const position = positions.get(node.id());
+    const position = graphLayout.positions.get(node.id());
 
     if (position) {
       node.position(position);
     }
   });
 
+  requestGraphViewport(cy, graph, graphLayout, layoutMode, scrollElement);
+}
+
+function requestGraphViewport(
+  cy: Core,
+  graph: GraphResponse,
+  graphLayout: GraphLayout,
+  layoutMode: GraphLayoutMode,
+  scrollElement: HTMLDivElement | null,
+) {
+  if (layoutMode === 'structured') {
+    requestStructuredViewport(cy, graph, graphLayout, scrollElement);
+    return;
+  }
+
   requestFit(cy);
+}
+
+function requestStructuredViewport(
+  cy: Core,
+  graph: GraphResponse,
+  graphLayout: GraphLayout,
+  scrollElement: HTMLDivElement | null,
+) {
+  const alignScrollToRoot = () => {
+    if (!scrollElement) {
+      return;
+    }
+
+    const rootPosition = graphLayout.positions.get(graph.rootCourseId);
+    const rootX = rootPosition?.x ?? graphLayout.rootX;
+    const maxScrollLeft = Math.max(0, scrollElement.scrollWidth - scrollElement.clientWidth);
+    const nextScrollLeft = Math.min(Math.max(0, rootX - scrollElement.clientWidth * 0.32), maxScrollLeft);
+    scrollElement.scrollLeft = nextScrollLeft;
+  };
+
+  window.requestAnimationFrame(() => {
+    cy.resize();
+    cy.zoom(1);
+    cy.pan({ x: 0, y: 0 });
+    alignScrollToRoot();
+
+    window.requestAnimationFrame(() => {
+      cy.resize();
+      cy.zoom(1);
+      cy.pan({ x: 0, y: 0 });
+      alignScrollToRoot();
+    });
+  });
 }
 
 function requestFit(cy: Core) {
@@ -673,71 +806,126 @@ function groupRankByNode(graph: GraphResponse): Map<string, number> {
   return ranks;
 }
 
-function graphNodePositions(
+function graphNodeLayout(
   graph: GraphResponse,
   groupRanks: Map<string, number>,
-): Map<string, { x: number; y: number }> {
+  stageSize: StageSize,
+): GraphLayout {
+  const canvasHeight = Math.max(defaultGraphHeight, stageSize.height || defaultGraphHeight);
+  const viewportWidth = Math.max(0, stageSize.width || 0);
+  const maxRows = maxRowsForHeight(canvasHeight);
   const placements = nodePlacements(graph, groupRanks);
-  const buckets = new Map<string, NodePlacement[]>();
   const positions = new Map<string, { x: number; y: number }>();
+  const bucketPlacements = new Map<string, NodePlacement[]>();
 
   placements.forEach((placement) => {
     if (placement.id === graph.rootCourseId) {
-      positions.set(placement.id, { x: 0, y: 0 });
+      positions.set(placement.id, { x: 0, y: canvasHeight / 2 });
       return;
     }
 
-    const key = `${placement.side}:${placement.distance}`;
-    const bucket = buckets.get(key) ?? [];
+    const side = placement.side < 0 ? -1 : 1;
+    const key = `${side}:${placement.distance}`;
+    const bucket = bucketPlacements.get(key) ?? [];
     bucket.push(placement);
-    buckets.set(key, bucket);
+    bucketPlacements.set(key, bucket);
   });
 
+  const buckets = Array.from(bucketPlacements.entries()).map<LayoutBucket>(([key, bucket]) => {
+    const [side, distance] = key.split(':').map(Number) as [-1 | 1, number];
+    const placementsForBucket = [...bucket].sort(comparePlacements);
+
+    return {
+      columnCount: Math.max(1, Math.ceil(placementsForBucket.length / maxRows)),
+      distance,
+      placements: placementsForBucket,
+      side,
+      startX: 0,
+    };
+  });
+
+  assignBucketColumns(buckets, 1);
+  assignBucketColumns(buckets, -1);
+
   buckets.forEach((bucket) => {
-    const side = bucket[0]?.side ?? 0;
-    const distance = bucket[0]?.distance ?? 1;
-    const grouped = new Map<number, NodePlacement[]>();
-
-    bucket.forEach((placement) => {
-      const group = grouped.get(placement.groupRank) ?? [];
-      group.push(placement);
-      grouped.set(placement.groupRank, group);
-    });
-
-    const ordered: Array<{ placement: NodePlacement; y: number }> = [];
-    let cursor = 0;
-
-    Array.from(grouped.keys())
-      .sort((left, right) => left - right)
-      .forEach((rank) => {
-        const members = grouped.get(rank) ?? [];
-        members.sort(comparePlacements);
-
-        members.forEach((placement, index) => {
-          ordered.push({ placement, y: cursor + index * 72 });
-        });
-
-        cursor += Math.max(1, members.length) * 72 + 36;
-      });
-
-    const maxRows = 9;
-    const columnCount = Math.max(1, Math.ceil(ordered.length / maxRows));
-
-    ordered.forEach(({ placement }, index) => {
+    bucket.placements.forEach((placement, index) => {
       const column = Math.floor(index / maxRows);
       const row = index % maxRows;
-      const rowsInColumn = Math.min(maxRows, ordered.length - column * maxRows);
-      const x =
-        side === 0
-          ? (column - (columnCount - 1) / 2) * 112
-          : side * (distance * 220 + column * 112);
-      const y = (row - (rowsInColumn - 1) / 2) * 74;
+      const rowsInColumn = Math.min(maxRows, bucket.placements.length - column * maxRows);
+      const x = bucket.startX + bucket.side * column * layoutColumnSpacing;
+      const y = centeredRowY(row, rowsInColumn, canvasHeight);
 
       positions.set(placement.id, { x, y });
     });
   });
 
-  return positions;
+  return normalizeGraphLayout(positions, graph.rootCourseId, viewportWidth, canvasHeight);
+}
+
+function assignBucketColumns(buckets: LayoutBucket[], side: -1 | 1) {
+  let nextStartX = side * layoutFirstLayerGap;
+
+  buckets
+    .filter((bucket) => bucket.side === side)
+    .sort((left, right) => left.distance - right.distance)
+    .forEach((bucket) => {
+      bucket.startX = nextStartX;
+      nextStartX += side * (bucket.columnCount * layoutColumnSpacing + layoutDistanceGap);
+    });
+}
+
+function centeredRowY(row: number, rowsInColumn: number, canvasHeight: number): number {
+  return canvasHeight / 2 + (row - (rowsInColumn - 1) / 2) * layoutRowSpacing;
+}
+
+function maxRowsForHeight(canvasHeight: number): number {
+  const availableHeight = Math.max(0, canvasHeight - layoutVerticalPadding * 2 - layoutNodeDiameter);
+  return Math.max(1, Math.floor(availableHeight / layoutRowSpacing) + 1);
+}
+
+function normalizeGraphLayout(
+  positions: Map<string, { x: number; y: number }>,
+  rootCourseId: string,
+  viewportWidth: number,
+  canvasHeight: number,
+): GraphLayout {
+  if (positions.size === 0) {
+    return {
+      height: canvasHeight,
+      positions,
+      rootX: 0,
+      width: viewportWidth,
+    };
+  }
+
+  let minX = Number.POSITIVE_INFINITY;
+  let maxX = Number.NEGATIVE_INFINITY;
+
+  positions.forEach((position) => {
+    minX = Math.min(minX, position.x - layoutNodeDiameter / 2);
+    maxX = Math.max(maxX, position.x + layoutNodeDiameter / 2);
+  });
+
+  const offsetX = layoutHorizontalPadding - minX;
+  const normalizedPositions = new Map<string, { x: number; y: number }>();
+
+  positions.forEach((position, courseId) => {
+    normalizedPositions.set(courseId, {
+      x: position.x + offsetX,
+      y: position.y,
+    });
+  });
+
+  const contentWidth = maxX - minX + layoutHorizontalPadding * 2;
+  const width = Math.max(viewportWidth, Math.ceil(contentWidth));
+  const rootX = normalizedPositions.get(rootCourseId)?.x ?? layoutHorizontalPadding;
+
+  return {
+    height: canvasHeight,
+    positions: normalizedPositions,
+    rootX,
+    width,
+  };
 }
 
 function nodePlacements(graph: GraphResponse, groupRanks: Map<string, number>): NodePlacement[] {
@@ -863,19 +1051,41 @@ function clearGraphHoverState(cy: Core) {
   cy.elements().removeClass('is-faded is-focused is-hovered is-neighbor');
 }
 
-function panelPosition(event: EventObject, container: HTMLDivElement | null): { x: number; y: number } {
-  const renderedPosition = event.renderedPosition ?? latestPanelPosition(event.target as NodeSingular, container);
-  return clampPanelPosition(renderedPosition.x + 16, renderedPosition.y + 16, container);
+function panelPosition(
+  event: EventObject,
+  stage: HTMLDivElement | null,
+  container: HTMLDivElement | null,
+): { x: number; y: number } {
+  const renderedPosition = event.renderedPosition ?? (event.target as NodeSingular).renderedPosition();
+  return renderedPositionToPanelPosition(renderedPosition.x, renderedPosition.y, stage, container);
 }
 
-function latestPanelPosition(node: NodeSingular, container: HTMLDivElement | null): { x: number; y: number } {
+function latestPanelPosition(
+  node: NodeSingular,
+  stage: HTMLDivElement | null,
+  container: HTMLDivElement | null,
+): { x: number; y: number } {
   const position = node.renderedPosition();
-  return clampPanelPosition(position.x + 16, position.y + 16, container);
+  return renderedPositionToPanelPosition(position.x, position.y, stage, container);
 }
 
-function clampPanelPosition(x: number, y: number, container: HTMLDivElement | null): { x: number; y: number } {
-  const width = container?.clientWidth ?? 360;
-  const height = container?.clientHeight ?? 260;
+function renderedPositionToPanelPosition(
+  x: number,
+  y: number,
+  stage: HTMLDivElement | null,
+  container: HTMLDivElement | null,
+): { x: number; y: number } {
+  const stageRect = stage?.getBoundingClientRect();
+  const containerRect = container?.getBoundingClientRect();
+  const offsetX = stageRect && containerRect ? containerRect.left - stageRect.left : 0;
+  const offsetY = stageRect && containerRect ? containerRect.top - stageRect.top : 0;
+
+  return clampPanelPosition(offsetX + x + 16, offsetY + y + 16, stage);
+}
+
+function clampPanelPosition(x: number, y: number, stage: HTMLDivElement | null): { x: number; y: number } {
+  const width = stage?.clientWidth ?? 360;
+  const height = stage?.clientHeight ?? 260;
   const maxX = Math.max(12, width - 344);
   const maxY = Math.max(12, height - 244);
 

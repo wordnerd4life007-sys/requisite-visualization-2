@@ -472,7 +472,31 @@ h1 {
 .graph-stage {
   background: #000;
   min-height: 0;
+  overflow: hidden;
   position: relative;
+}
+
+.graph-scroll {
+  height: 100%;
+  min-height: 430px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-color: #3d4b5b #05070b;
+  scrollbar-width: thin;
+}
+
+.graph-scroll::-webkit-scrollbar {
+  height: 12px;
+}
+
+.graph-scroll::-webkit-scrollbar-track {
+  background: #05070b;
+}
+
+.graph-scroll::-webkit-scrollbar-thumb {
+  background: #3d4b5b;
+  border: 3px solid #05070b;
+  border-radius: 999px;
 }
 
 .graph-canvas {
@@ -485,6 +509,11 @@ h1 {
 
 .graph-panel.is-fullscreen .graph-canvas,
 .graph-panel:fullscreen .graph-canvas {
+  min-height: 0;
+}
+
+.graph-panel.is-fullscreen .graph-scroll,
+.graph-panel:fullscreen .graph-scroll {
   min-height: 0;
 }
 
@@ -1002,6 +1031,10 @@ dd {
   }
 
   .graph-stage {
+    min-height: 440px;
+  }
+
+  .graph-scroll {
     min-height: 440px;
   }
 
