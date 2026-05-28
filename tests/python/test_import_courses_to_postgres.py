@@ -61,6 +61,8 @@ class ImportCoursesToPostgresTests(unittest.TestCase):
         sql = self.importer.generate_sql(plan)
         self.assertIn("subject TEXT NOT NULL", sql)
         self.assertIn("department TEXT NOT NULL", sql)
+        self.assertIn("DELETE FROM courses AS existing", sql)
+        self.assertIn("WHERE imported.id = existing.id", sql)
         self.assertIn("UPDATE courses SET subject = imported.subject", sql)
         self.assertIn("UPDATE courses SET department = imported.department", sql)
 

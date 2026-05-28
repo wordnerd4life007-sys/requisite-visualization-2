@@ -1,11 +1,17 @@
+#include "DatabaseConfig.h"
 #include "api/ApiHandlers.h"
 #include "api/CsvCatalog.h"
+#include "api/PostgresCatalog.h"
 
+#include <algorithm>
 #include <cerrno>
+#include <cctype>
 #include <csignal>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string>
 
@@ -44,6 +50,85 @@ void closeSocket(SocketHandle socketHandle) {
 
 void handleSignal(int) {
     keepRunning = 0;
+}
+
+std::string trim(const std::string& value) {
+    std::size_t start = 0;
+    while (start < value.size() && std::isspace(static_cast<unsigned char>(value[start]))) {
+        ++start;
+    }
+
+    std::size_t end = value.size();
+    while (end > start && std::isspace(static_cast<unsigned char>(value[end - 1]))) {
+        --end;
+    }
+
+    return value.substr(start, end - start);
+}
+
+std::string toLower(std::string value) {
+    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
+        return static_cast<char>(std::tolower(ch));
+    });
+    return value;
+}
+
+bool hasEnvValue(const char* name) {
+    const char* value = std::getenv(name);
+    return value != nullptr && value[0] != '\0';
+}
+
+void setEnvIfMissing(const std::string& name, const std::string& value) {
+    if (name.empty() || hasEnvValue(name.c_str())) {
+        return;
+    }
+
+#ifdef _WIN32
+    _putenv_s(name.c_str(), value.c_str());
+#else
+    setenv(name.c_str(), value.c_str(), 0);
+#endif
+}
+
+std::string unquoteEnvValue(const std::string& value) {
+    if (value.size() >= 2
+        && ((value.front() == '"' && value.back() == '"')
+            || (value.front() == '\'' && value.back() == '\''))) {
+        return value.substr(1, value.size() - 2);
+    }
+    return value;
+}
+
+void loadDotEnv() {
+    std::ifstream file(".env");
+    if (!file.is_open()) {
+        return;
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        const std::string trimmed = trim(line);
+        if (trimmed.empty() || trimmed[0] == '#') {
+            continue;
+        }
+
+        const std::size_t equals = trimmed.find('=');
+        if (equals == std::string::npos) {
+            continue;
+        }
+
+        const std::string name = trim(trimmed.substr(0, equals));
+        const std::string value = unquoteEnvValue(trim(trimmed.substr(equals + 1)));
+        setEnvIfMissing(name, value);
+    }
+}
+
+std::string dataSource() {
+    const char* raw = std::getenv("API_DATA_SOURCE");
+    if (raw == nullptr || raw[0] == '\0') {
+        return "postgres";
+    }
+    return toLower(trim(raw));
 }
 
 std::string reasonPhrase(int status) {
@@ -170,6 +255,8 @@ void handleClient(SocketHandle clientSocket, const api::ApiHandlers& handlers) {
 } // namespace
 
 int main() {
+    loadDotEnv();
+
     std::signal(SIGINT, handleSignal);
     std::signal(SIGTERM, handleSignal);
 
@@ -181,10 +268,33 @@ int main() {
     }
 #endif
 
-    api::CsvCatalog catalog;
+    std::unique_ptr<api::CourseCatalog> catalog;
     std::string loadError;
-    if (!catalog.load(&loadError)) {
-        std::cerr << "Failed to load course catalog: " << loadError << std::endl;
+    const std::string source = dataSource();
+
+    if (source == "csv") {
+        auto csvCatalog = std::make_unique<api::CsvCatalog>();
+        if (!csvCatalog->load(&loadError)) {
+            std::cerr << "Failed to load CSV course catalog: " << loadError << std::endl;
+#ifdef _WIN32
+            WSACleanup();
+#endif
+            return 1;
+        }
+        catalog = std::move(csvCatalog);
+    } else if (source == "postgres") {
+        auto postgresCatalog = std::make_unique<api::PostgresCatalog>();
+        const DatabaseConfig dbConfig = DatabaseConfig::fromEnvironment();
+        if (!postgresCatalog->load(dbConfig, &loadError)) {
+            std::cerr << "Failed to load PostgreSQL course catalog: " << loadError << std::endl;
+#ifdef _WIN32
+            WSACleanup();
+#endif
+            return 1;
+        }
+        catalog = std::move(postgresCatalog);
+    } else {
+        std::cerr << "Invalid API_DATA_SOURCE '" << source << "'. Use 'postgres' or 'csv'." << std::endl;
 #ifdef _WIN32
         WSACleanup();
 #endif
@@ -231,9 +341,10 @@ int main() {
         return 1;
     }
 
-    api::ApiHandlers handlers(catalog);
+    api::ApiHandlers handlers(*catalog);
     std::cout << "API server listening on http://127.0.0.1:" << port
-              << " with " << catalog.size() << " courses." << std::endl;
+              << " with " << catalog->size() << " courses from "
+              << source << "." << std::endl;
 
     while (keepRunning) {
         sockaddr_in clientAddress{};

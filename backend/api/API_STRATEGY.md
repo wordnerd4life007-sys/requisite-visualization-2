@@ -5,10 +5,11 @@ This lane owns the API and integration boundary. The first implementation should
 ## Runtime Approach
 
 - Start with transport-independent C++ response models and serialization helpers under `backend/include/api/` and `backend/src/api/`.
-- Serve data from the in-memory catalog/graph interface first, then add a PostgreSQL-backed adapter after the import pipeline settles.
-- Keep PostgreSQL optional until the database import path and external prerequisite representation are stable.
+- Serve API handlers through a catalog interface. `PostgresCatalog` and `CsvCatalog` both populate the same in-memory search/graph model.
+- Default runtime is `API_DATA_SOURCE=postgres`, which snapshots PostgreSQL into memory at startup. `API_DATA_SOURCE=csv` keeps the generated CSV path available for tests and local fallback work.
 - The first HTTP runtime is a minimal standalone C++ socket server in `backend/src/api/HttpServer.cpp`. It binds to `127.0.0.1`, defaults to port `8080`, and can be moved to a web framework later if API complexity grows.
-- The server reads `COURSES_CSV_PATH` when set, otherwise it falls back to `backend/data/courses.csv`, `data/courses.csv`, and `courses.csv`. It does not read `.env`.
+- The server loads `.env` without overriding existing shell variables. In CSV mode it reads `COURSES_CSV_PATH` when set, otherwise it falls back to `backend/data/courses.csv`, `data/courses.csv`, and `courses.csv`.
+- The generated CSV remains the ingestion artifact: Coursedog -> CSV -> PostgreSQL import -> API startup snapshot.
 
 ## Database Environment Precedence
 
@@ -30,6 +31,15 @@ Mapped component variables:
 | password | `DB_PASSWORD` | `POSTGRES_PASSWORD` | empty |
 
 Secrets must not be logged. Redacted connection strings may show usernames, hostnames, ports, and database names, but password values must be replaced with `****`.
+
+## Catalog Source Selection
+
+`API_DATA_SOURCE` controls the runtime source:
+
+- `postgres` is the default and requires imported catalog data.
+- `csv` reads the generated CSV directly and is intended for fixture tests and local fallback work.
+
+Both sources must produce the same JSON contracts below.
 
 ## Initial Endpoints
 

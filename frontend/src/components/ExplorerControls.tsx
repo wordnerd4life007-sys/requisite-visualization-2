@@ -1,12 +1,16 @@
 import { Maximize2, Minimize2, Minus, Plus, RotateCcw, Scan } from 'lucide-react';
-import type { GraphDirection } from '../types';
+import type { GraphDirection, GraphLayoutMode } from '../types';
 
 interface ExplorerControlsProps {
   depth: number;
   direction: GraphDirection;
   graphNodeCount: number;
   graphEdgeCount: number;
+  layoutMode: GraphLayoutMode;
+  canShowMoreDependents: boolean;
   isFullscreen: boolean;
+  onLayoutModeChange: (layoutMode: GraphLayoutMode) => void;
+  onShowMoreDependents: () => void;
   onDirectionChange: (direction: GraphDirection) => void;
   onDepthChange: (depth: number) => void;
   onFit: () => void;
@@ -27,7 +31,11 @@ function ExplorerControls({
   direction,
   graphNodeCount,
   graphEdgeCount,
+  layoutMode,
+  canShowMoreDependents,
   isFullscreen,
+  onLayoutModeChange,
+  onShowMoreDependents,
   onDirectionChange,
   onDepthChange,
   onFit,
@@ -80,6 +88,14 @@ function ExplorerControls({
       </div>
 
       <div className="control-cluster">
+        <span className="control-label">Layout</span>
+        <select value={layoutMode} onChange={(event) => onLayoutModeChange(event.target.value as GraphLayoutMode)}>
+          <option value="structured">Structured</option>
+          <option value="organic">Organic</option>
+        </select>
+      </div>
+
+      <div className="control-cluster">
         <span className="control-label">View</span>
         <div className="icon-toolbar" role="group" aria-label="Graph viewport controls">
           <button className="icon-command" type="button" onClick={onZoomOut} title="Zoom out" aria-label="Zoom out">
@@ -109,6 +125,11 @@ function ExplorerControls({
       <div className="graph-metrics" aria-label="Visible graph size">
         <span>{graphNodeCount} nodes</span>
         <span>{graphEdgeCount} edges</span>
+        {canShowMoreDependents ? (
+          <button className="show-more-button" type="button" onClick={onShowMoreDependents}>
+            Show more dependents
+          </button>
+        ) : null}
       </div>
     </div>
   );

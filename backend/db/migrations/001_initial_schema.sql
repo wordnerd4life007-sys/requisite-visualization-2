@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS courses (
     name TEXT NOT NULL,
     credits TEXT NOT NULL DEFAULT '',
     college TEXT NOT NULL,
+    subject TEXT NOT NULL DEFAULT '',
+    department TEXT NOT NULL DEFAULT '',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT courses_id_not_blank CHECK (btrim(id) <> ''),
@@ -12,6 +14,8 @@ CREATE TABLE IF NOT EXISTS courses (
     CONSTRAINT courses_college_not_blank CHECK (btrim(college) <> '')
 );
 
+ALTER TABLE courses ADD COLUMN IF NOT EXISTS subject TEXT NOT NULL DEFAULT '';
+ALTER TABLE courses ADD COLUMN IF NOT EXISTS department TEXT NOT NULL DEFAULT '';
 ALTER TABLE courses DROP CONSTRAINT IF EXISTS courses_credits_check;
 ALTER TABLE courses ALTER COLUMN credits TYPE TEXT USING credits::text;
 ALTER TABLE courses ALTER COLUMN credits SET DEFAULT '';
@@ -41,6 +45,12 @@ CREATE TABLE IF NOT EXISTS course_prerequisite_options (
 CREATE INDEX IF NOT EXISTS idx_course_prerequisite_options_prerequisite_id
     ON course_prerequisite_options (prerequisite_id);
 
+CREATE INDEX IF NOT EXISTS idx_courses_subject
+    ON courses (subject);
+
+CREATE INDEX IF NOT EXISTS idx_courses_college
+    ON courses (college);
+
 CREATE OR REPLACE VIEW course_prerequisites AS
 SELECT
     groups.course_id,
@@ -59,8 +69,10 @@ SELECT
     course_id AS target_course_id
 FROM course_prerequisite_options;
 
-COMMENT ON TABLE courses IS 'Course catalog rows: id, name, raw catalog credits text, and college.';
+COMMENT ON TABLE courses IS 'Course catalog rows: id, name, raw catalog credits text, college, subject, and department.';
 COMMENT ON COLUMN courses.credits IS 'Catalog credit value as emitted by the CSV; blank and nonnumeric values are allowed.';
+COMMENT ON COLUMN courses.subject IS 'Catalog subject label used by API filters and graph metadata.';
+COMMENT ON COLUMN courses.department IS 'Catalog department label used by API metadata responses.';
 COMMENT ON TABLE course_prerequisite_groups IS 'Prerequisite expression groups. all groups require every option; any groups require one option.';
 COMMENT ON TABLE course_prerequisite_options IS 'Prerequisite course ids inside each requirement group. prerequisite_id may reference courses outside this local catalog.';
 COMMENT ON VIEW course_prerequisites IS 'Expanded prerequisite rows with group semantics preserved.';
