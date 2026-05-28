@@ -1,20 +1,10 @@
 #pragma once
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
+#include "PrerequisiteParser.h"
+
 #include <string>
-#include <vector>
 #include <unordered_map>
-#include <queue>
-#include <climits>
-
-struct PrereqGroups {
-    std::vector<std::string> andPrereqs;
-    std::vector<std::vector<std::string>> orGroups;
-
-    std::vector<std::string> allPrereqs() const;
-};
+#include <vector>
 
 class Graph{
     private:
@@ -26,9 +16,10 @@ class Graph{
         Graph(std::unordered_map<std::string, std::vector<std::string>> adj) : adj(adj) {}
         
         void buildGraph();
-        int CountPaths(std::string start, std::string end);
+        int ShortestPathLength(const std::string& start, const std::string& end) const;
+        int CountPaths(const std::string& start, const std::string& end) const;
 
-        PrereqGroups grabPreReqGroups(std::string id);
-        std::vector<std::string>  grabPreReqs(std::string id);
+        PrereqGroups grabPreReqGroups(const std::string& id) const;
+        std::vector<std::string>  grabPreReqs(const std::string& id) const;
 
 };

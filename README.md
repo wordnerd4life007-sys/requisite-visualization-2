@@ -1,104 +1,163 @@
 # requisite-visualization
-Visualizes perquisites for classes. Helpful for deciding course journey through college. 
 
-## Project Direction
-`requisite-visualization` is a course prerequisite exploration tool for UCSB College of Engineering courses. The goal is to help students search for a course, understand its direct and recursive prerequisites, see which later courses depend on it, and eventually plan a path through a degree or course sequence.
+`requisite-visualization` is a local UCSB course prerequisite explorer. It loads the current generated UCSB catalog, serves a read-only C++ API, and renders a Vite React + TypeScript graph UI for searching courses, inspecting prerequisite groups, viewing dependents, and exploring graph neighborhoods.
 
+## Current Behavior
 
-Project in early prototype state. Backend can grab and parse course csv and build a prerequisite graph. PostgreSQL schema work initiated, but does not yet load complete catalog nor does it expose an API. Frontend directory is currently a placeholder, but will be built via React. 
+- `scripts/generate_courses_csv.py` fetches UCSB Coursedog data and writes `backend/data/courses.csv`.
+- `backend/data/courses.csv` currently contains 12,271 UCSB course rows with `college`, `subject`, and `department` metadata.
+- The C++ API server defaults to `API_DATA_SOURCE=postgres`, loads a PostgreSQL snapshot into memory at startup, and serves course, prerequisite, dependent, and graph responses from `backend/src/api/HttpServer.cpp`.
+- `API_DATA_SOURCE=csv` keeps the previous CSV runtime available for tests and local fallback work.
+- `frontend/` is a Vite React + TypeScript app using `fetch()` calls against the backend API. Normal runtime does not use `frontend/src/data/mockCatalog.ts`.
+- PostgreSQL is now the default runtime source after importing the generated CSV.
+- `backend/src/main.cpp` remains a small demo executable separate from the API server.
 
-## Current Status
+## Run Locally
 
-- C++ backend prototype reads `backend/data/courses.csv`.
-- `Graph` can build prerequisite-to-course edges and run simple path checks.
-- `scripts/generate_courses_csv.py` generates the CSV from UCSB Coursedog catalog data.
-- PostgreSQL runs locally through Docker Compose.
-- Database schema supports grouped prerequisites: required courses and alternative prerequisite groups.
-- Frontend visualization has not been implemented yet.
-
-
-## Intended Data Flow
-UCSB CourseDog catalog
-         ↓ 
-scripts/generate_courses_csv.py
-         ↓
-backend/data/courses.csv
-         ↓
-PostgreSQL import
-         ↓
-C++ graph/query layer
-         ↓
-API
-         ↓
-React/typescript web visualization
-
-## Near-Term Roadmap
-- TODO
-
-
-## Local PostgreSQL with Docker Compose
-
-This project uses Docker Compose for local PostgreSQL. Do not install system-wide PostgreSQL for this setup.
-
-If Docker Desktop is installed but `docker` is not on PATH, run:
+Build the backend demo and API:
 
 ```powershell
-.\scripts\enable-docker-path.ps1
+mingw32-make
+mingw32-make api
 ```
 
-1. Copy the example environment file and replace the placeholder password values:
-
-   ```powershell
-   Copy-Item .env.example .env
-   ```
-
-   Keep `.env` local. It contains real credentials and is ignored by Git. Commit only `.env.example` with placeholder values.
-
-2. Start PostgreSQL:
-
-   ```powershell
-   docker compose up -d postgres
-   ```
-
-3. Check the connection and seed data:
-
-   ```powershell
-   .\scripts\test-db-connection.ps1
-   ```
-
-4. Stop PostgreSQL while keeping the local database volume:
-
-   ```powershell
-   docker compose down
-   ```
-
-Resetting the database is destructive because it deletes the local `postgres_data` volume. Ask before running this command:
+On Windows with PostgreSQL installed outside MSYS2, the Makefile defaults to `C:/PROGRA~1/POSTGR~1/18`. Override these if needed:
 
 ```powershell
-docker compose down -v
+mingw32-make api PG_ROOT=C:/Path/To/PostgreSQL/18
 ```
 
-The next `docker compose up -d postgres` will recreate the database and rerun the init scripts.
-
-Connect with `psql` inside the container:
+Start local PostgreSQL and apply the schema to existing volumes:
 
 ```powershell
-docker compose exec postgres sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+docker compose up -d postgres
+.\scripts\apply-db-migration.ps1
 ```
 
-Schema and seed files:
+Import the generated catalog into PostgreSQL:
+
+```powershell
+python .\scripts\import_courses_to_postgres.py --apply
+```
+
+Start the API server:
+
+```powershell
+$env:API_DATA_SOURCE='postgres'
+.\build\requisite-api.exe
+```
+
+The API binds to `127.0.0.1` and defaults to port `8080`. Override with:
+
+```powershell
+$env:API_PORT='18080'
+.\build\requisite-api.exe
+```
+
+Use the CSV-backed runtime explicitly when testing without PostgreSQL:
+
+```powershell
+$env:API_DATA_SOURCE='csv'
+.\build\requisite-api.exe
+```
+
+Start the frontend:
+
+```powershell
+cd frontend
+$env:VITE_API_BASE_URL='http://127.0.0.1:8080'
+npm run dev -- --host 127.0.0.1 --port 5173
+```
+
+Open `http://127.0.0.1:5173`.
+
+## Useful Checks
+
+```powershell
+mingw32-make test-cpp
+python -m unittest discover -s tests/python
+mingw32-make test-api-smoke
+mingw32-make test-api-smoke-postgres
+python .\scripts\import_courses_to_postgres.py --dry-run
+cd frontend
+npm run build
+```
+
+The Vite build currently reports a large Cytoscape chunk warning. That warning is expected until bundle splitting is addressed.
+
+## API
+
+Implemented read-only endpoints:
+
+```text
+GET /health
+GET /courses?q=&subjects=&colleges=&limit=
+GET /courses/:id
+GET /courses/:id/prerequisites
+GET /courses/:id/dependents
+GET /graph?course=&direction=&depth=&subjects=&colleges=
+```
+
+Responses include `id`, `name`, `credits`, `college`, `department`, `subject`, grouped prerequisites, `groupType`, `groupIndex`, and external prerequisite flags. See `backend/api/API_STRATEGY.md` for examples and current contract details.
+
+## Catalog Generation
+
+Regenerate the current all-UCSB catalog:
+
+```powershell
+python .\scripts\generate_courses_csv.py --output backend\data\courses.csv
+```
+
+Generate only selected college labels:
+
+```powershell
+python .\scripts\generate_courses_csv.py --college "College of Engineering" --output $env:TEMP\courses_coe.csv
+```
+
+`scripts/generate_courses_csv.py` requires `requests`. Python dependencies are not pinned yet.
+
+## PostgreSQL
+
+PostgreSQL is the default API runtime source. Docker Compose and schema files are available for local development:
 
 - `backend/db/migrations/001_initial_schema.sql`
 - `backend/db/seeds/001_sample_data.sql`
 
-Prerequisites are modeled with grouped requirements that match the CSV format:
+Start local PostgreSQL:
+
+```powershell
+docker compose up -d postgres
+```
+
+Check connectivity:
+
+```powershell
+.\scripts\test-db-connection.ps1
+```
+
+Docker only runs init scripts when the `postgres_data` volume is first created. For an existing volume, apply the migration manually:
+
+```powershell
+.\scripts\apply-db-migration.ps1
+```
+
+The import script treats `backend/data/courses.csv` as authoritative when applying SQL: courses missing from the latest CSV are removed from PostgreSQL, while external prerequisite ids remain represented in `course_prerequisite_options`.
+
+Do not run `docker compose down -v` unless you intentionally want to delete the local `postgres_data` volume.
+
+## Prerequisite Semantics
+
+Prerequisites are represented as grouped requirements:
 
 ```text
 AND course, AND course | OR option, OR option; OR option, OR option
 ```
 
-Every `all` group must be completed. Every `any` group requires one of its options. For graph-only queries, `course_dependency_edges` provides a flattened prerequisite-to-course edge view.
+Every `all` group must be completed. Every `any` group requires one option from that group. Flattened prerequisite-to-course edges are useful for traversal and graph display, but the grouped data remains the source for prerequisite semantics.
 
-The C++ backend lives in `backend/src` with headers in `backend/include`. Course data lives in `backend/data/courses.csv`; set `COURSES_CSV_PATH` to override the CSV path.
+## Remaining Work
 
-The app reads database settings from `DATABASE_URL` or the `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD` environment variables via `DatabaseConfig::fromEnvironment()`. The current app only loads connection configuration; it does not require a system PostgreSQL client library to build.
+- Add `/paths` and path reconstruction to the API.
+- Improve parser handling for concurrent enrollment, minimum grades, standing, instructor consent, and non-course requirements.
+- Add frontend tests beyond the current build and browser smoke workflow.
+- Split the Cytoscape bundle if production bundle size becomes important.

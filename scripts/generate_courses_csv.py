@@ -5,28 +5,37 @@ from __future__ import annotations
 
 import argparse
 import csv
+import datetime as dt
 import html
 import re
 import sys
 from collections import Counter
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
+from urllib.parse import urlencode
 
 import requests
 
 
 CATALOG_ID = "mZXlGvYb30h2fSq3aYLn"
-CATALOG_URL = (
-    "https://app.coursedog.com/api/v1/cm/ucsb/courses/search/%24filters"
-    f"?catalogId={CATALOG_ID}"
-    "&skip=0"
-    "&limit=50000"
-    "&orderBy=code"
-    "&formatDependents=false"
-    "&effectiveDatesRange=2026-03-30%2C2026-03-30"
-    "&ignoreEffectiveDating=false"
-    "&columns=code%2CcourseGroupId%2CsubjectCode%2CcourseNumber%2ClongName%2Ccredits%2Ccollege%2Crequisites"
-)
+CATALOG_SEARCH_URL = "https://app.coursedog.com/api/v1/cm/ucsb/courses/search/%24filters"
+CATALOG_LIMIT = 50000
+CATALOG_COLUMNS = [
+    "code",
+    "courseGroupId",
+    "subjectCode",
+    "courseNumber",
+    "longName",
+    "globalCourseTitle",
+    "name",
+    "credits",
+    "college",
+    "departments",
+    "requisites",
+    "effectiveStartDate",
+    "effectiveEndDate",
+]
 
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
@@ -69,6 +78,20 @@ FILTERS = {
     "condition": "and",
 }
 
+@dataclass(frozen=True)
+class CatalogSummary:
+    fetched_count: int
+    selected_count: int
+    duplicate_ids: list[str] = field(default_factory=list)
+    college_counts: Counter = field(default_factory=Counter)
+    subject_counts: Counter = field(default_factory=Counter)
+    department_counts: Counter = field(default_factory=Counter)
+    flag_counts: Counter = field(default_factory=Counter)
+    blank_name_fallbacks: int = 0
+    blank_credit_count: int = 0
+    nonstandard_credit_count: int = 0
+
+
 NAME_MAP = [
     (r"\bElectrical\s+and\s+Computer\s+Engineering\b", "ECE"),
     (r"\bElectrical\s+Engineering\b", "ECE"),
@@ -100,8 +123,23 @@ NAME_MAP = [
 ]
 
 
-def fetch_catalog_records() -> list[dict]:
-    response = requests.post(CATALOG_URL, json=FILTERS, headers=HEADERS, timeout=120)
+def build_catalog_url(effective_date: str) -> str:
+    query = {
+        "catalogId": CATALOG_ID,
+        "skip": "0",
+        "limit": str(CATALOG_LIMIT),
+        "orderBy": "code",
+        "formatDependents": "false",
+        "effectiveDatesRange": f"{effective_date},{effective_date}",
+        "ignoreEffectiveDating": "false",
+        "columns": ",".join(CATALOG_COLUMNS),
+    }
+    return f"{CATALOG_SEARCH_URL}?{urlencode(query)}"
+
+
+def fetch_catalog_records(effective_date: str | None = None) -> list[dict]:
+    effective_date = effective_date or dt.date.today().isoformat()
+    response = requests.post(build_catalog_url(effective_date), json=FILTERS, headers=HEADERS, timeout=120)
     response.raise_for_status()
     return response.json()["data"]
 
@@ -121,11 +159,89 @@ def course_id(subject: str, number: str) -> str:
     return f"{subject} {number}"
 
 
+def course_sort_key(course: dict) -> tuple[str, str, str, str]:
+    return (
+        normalize_subject(course.get("subjectCode") or ""),
+        (course.get("courseNumber") or "").upper().replace(" ", ""),
+        course.get("effectiveStartDate") or "",
+        course.get("_id") or course.get("id") or "",
+    )
+
+
+def record_precedence_key(course: dict) -> tuple[str, str]:
+    return (
+        course.get("effectiveStartDate") or "",
+        course.get("_id") or course.get("id") or "",
+    )
+
+
+def select_latest_records(records: list[dict], colleges: set[str] | None = None) -> tuple[list[dict], list[str]]:
+    selected: dict[str, dict] = {}
+    duplicate_ids: set[str] = set()
+
+    for course in records:
+        college = (course.get("college") or "").strip()
+        if colleges is not None and college not in colleges:
+            continue
+
+        own_id = course_id(course.get("subjectCode") or "", course.get("courseNumber") or "")
+        if own_id in selected:
+            duplicate_ids.add(own_id)
+            if record_precedence_key(course) <= record_precedence_key(selected[own_id]):
+                continue
+        selected[own_id] = course
+
+    return sorted(selected.values(), key=course_sort_key), sorted(duplicate_ids)
+
+
 def course_units(course: dict) -> str:
     credits = course.get("credits") or {}
     credit_hours = credits.get("creditHours") or {}
     value = credit_hours.get("min") or credits.get("numberOfCredits") or ""
     return str(value)
+
+
+def is_standard_credit_value(value: str) -> bool:
+    return bool(re.fullmatch(r"[1-9][0-9]*", value))
+
+
+def course_name(course: dict, own_id: str) -> tuple[str, bool]:
+    for key in ("longName", "name"):
+        value = " ".join(str(course.get(key) or "").split())
+        if value:
+            return value, False
+
+    global_title = " ".join(str(course.get("globalCourseTitle") or "").split())
+    if global_title:
+        _, separator, title = global_title.partition(" - ")
+        value = title.strip() if separator else global_title
+        if value:
+            return value, True
+
+    return own_id, True
+
+
+def department_label(course: dict) -> str:
+    departments = course.get("departments") or []
+    labels: list[str] = []
+
+    for department in departments:
+        label = ""
+        if isinstance(department, str):
+            label = department
+        elif isinstance(department, dict):
+            for key in ("name", "label", "title", "code", "id", "value"):
+                if department.get(key):
+                    label = str(department[key])
+                    break
+        else:
+            label = str(department)
+
+        label = " ".join(label.split())
+        if label:
+            labels.append(label)
+
+    return "; ".join(dedupe(labels))
 
 
 def raw_requisite_text(course: dict) -> str:
@@ -427,44 +543,93 @@ def format_prereqs(and_prereqs: list[str], or_groups: list[list[str]]) -> str:
     return " ".join(parts)
 
 
-def generate_rows(records: list[dict]) -> tuple[list[list[str]], Counter, Counter]:
+def generate_rows(records: list[dict], colleges: set[str] | None = None) -> tuple[list[list[str]], CatalogSummary]:
     subjects = sorted(
         {normalize_subject(record.get("subjectCode") or "") for record in records if record.get("subjectCode")}
     )
     compiled_token = token_pattern(subjects)
     rows = []
     flag_counts: Counter = Counter()
+    college_counts: Counter = Counter()
     subject_counts: Counter = Counter()
+    department_counts: Counter = Counter()
+    blank_name_fallbacks = 0
+    blank_credit_count = 0
+    nonstandard_credit_count = 0
 
-    engineering_courses = [
-        record for record in records if record.get("college") == "College of Engineering"
-    ]
-    engineering_courses.sort(key=lambda course: (normalize_subject(course.get("subjectCode") or ""), course.get("courseNumber") or ""))
+    selected_records, duplicate_ids = select_latest_records(records, colleges)
 
-    for course in engineering_courses:
+    for course in selected_records:
         own_id = course_id(course.get("subjectCode") or "", course.get("courseNumber") or "")
+        name, used_name_fallback = course_name(course, own_id)
+        credits = course_units(course)
+        college = (course.get("college") or "").strip()
+        subject = normalize_subject(course.get("subjectCode") or "")
+        department = department_label(course)
         and_prereqs, or_groups, flags = parse_prereqs(raw_requisite_text(course), compiled_token, subjects)
         and_prereqs, or_groups = remove_self_reference(own_id, and_prereqs, or_groups)
         flag_counts.update(flags)
-        subject_counts[normalize_subject(course.get("subjectCode") or "")] += 1
+        college_counts[college] += 1
+        subject_counts[subject] += 1
+        if department:
+            department_counts[department] += 1
+        if used_name_fallback:
+            blank_name_fallbacks += 1
+        if credits == "":
+            blank_credit_count += 1
+        elif not is_standard_credit_value(credits):
+            nonstandard_credit_count += 1
+
         rows.append(
             [
                 own_id,
-                course.get("longName") or "",
-                course_units(course),
-                course.get("college") or "",
+                name,
+                credits,
+                college,
                 format_prereqs(and_prereqs, or_groups),
+                subject,
+                department,
             ]
         )
 
-    return rows, flag_counts, subject_counts
+    return rows, CatalogSummary(
+        fetched_count=len(records),
+        selected_count=len(rows),
+        duplicate_ids=duplicate_ids,
+        college_counts=college_counts,
+        subject_counts=subject_counts,
+        department_counts=department_counts,
+        flag_counts=flag_counts,
+        blank_name_fallbacks=blank_name_fallbacks,
+        blank_credit_count=blank_credit_count,
+        nonstandard_credit_count=nonstandard_credit_count,
+    )
 
 
 def write_courses_csv(rows: list[list[str]], output_path: Path) -> None:
     with output_path.open("w", newline="", encoding="utf-8") as output:
         writer = csv.writer(output)
-        writer.writerow(["id", "name", "credits", "college", "prereqs"])
+        writer.writerow(["id", "name", "credits", "college", "prereqs", "subject", "department"])
         writer.writerows(rows)
+
+
+def parse_effective_date(value: str) -> str:
+    try:
+        return dt.date.fromisoformat(value).isoformat()
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("expected YYYY-MM-DD") from exc
+
+
+def print_counts(label: str, counts: Counter, limit: int = 12) -> None:
+    if not counts:
+        print(f"{label}: none")
+        return
+
+    rendered = ", ".join(f"{name}={count}" for name, count in counts.most_common(limit))
+    remaining = len(counts) - limit
+    if remaining > 0:
+        rendered += f", ... {remaining} more"
+    print(f"{label}: {rendered}")
 
 
 def main() -> int:
@@ -474,17 +639,44 @@ def main() -> int:
         default=str(Path("backend") / "data" / "courses.csv"),
         help="Path to write. Defaults to backend/data/courses.csv.",
     )
+    parser.add_argument(
+        "--college",
+        action="append",
+        help="Optional exact college/school label to include. Repeat to include multiple. Defaults to all UCSB catalog rows.",
+    )
+    parser.add_argument(
+        "--effective-date",
+        type=parse_effective_date,
+        default=dt.date.today().isoformat(),
+        help="Catalog effective date in YYYY-MM-DD format. Defaults to today.",
+    )
     args = parser.parse_args()
 
-    records = fetch_catalog_records()
-    rows, flag_counts, subject_counts = generate_rows(records)
+    college_filter = {college.strip() for college in args.college if college.strip()} if args.college else None
+    records = fetch_catalog_records(args.effective_date)
+    rows, summary = generate_rows(records, college_filter)
     write_courses_csv(rows, Path(args.output))
 
-    print(f"Fetched {len(records)} active catalog courses.")
-    print(f"Wrote {len(rows)} College of Engineering courses to {args.output}.")
-    print("Subjects: " + ", ".join(f"{subject}={count}" for subject, count in subject_counts.most_common()))
-    if flag_counts:
-        print("Prereq conversion notes: " + ", ".join(f"{name}={count}" for name, count in flag_counts.items()))
+    scope = "all UCSB catalog rows" if college_filter is None else "college filter: " + ", ".join(sorted(college_filter))
+    print(f"Effective date: {args.effective_date}")
+    print(f"Fetched {summary.fetched_count} active catalog courses.")
+    print(f"Wrote {summary.selected_count} courses ({scope}) to {args.output}.")
+    if summary.duplicate_ids:
+        sample = ", ".join(summary.duplicate_ids[:12])
+        suffix = "" if len(summary.duplicate_ids) <= 12 else f", ... {len(summary.duplicate_ids) - 12} more"
+        print(f"Deduplicated normalized course ids: {len(summary.duplicate_ids)} ({sample}{suffix})")
+    print_counts("Colleges", summary.college_counts)
+    print_counts("Subjects", summary.subject_counts)
+    print_counts("Departments", summary.department_counts)
+    print(
+        "Credit notes: "
+        f"blank={summary.blank_credit_count}, "
+        f"nonstandard_nonblank={summary.nonstandard_credit_count}"
+    )
+    if summary.blank_name_fallbacks:
+        print(f"Name fallbacks applied: {summary.blank_name_fallbacks}")
+    if summary.flag_counts:
+        print("Prereq conversion notes: " + ", ".join(f"{name}={count}" for name, count in summary.flag_counts.items()))
     return 0
 
 

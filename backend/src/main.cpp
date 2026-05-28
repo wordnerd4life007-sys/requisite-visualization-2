@@ -1,5 +1,4 @@
 #include "Graph.h"
-#include "Course.h"
 #include "DatabaseConfig.h"
 #include <iostream>
 
