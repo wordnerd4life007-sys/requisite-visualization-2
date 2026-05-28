@@ -1,5 +1,6 @@
 export type PrerequisiteGroupType = 'all' | 'any';
 export type GraphDirection = 'prerequisites' | 'dependents' | 'both';
+export type GraphLayoutMode = 'structured' | 'organic';
 
 export interface CourseSummary {
   id: string;

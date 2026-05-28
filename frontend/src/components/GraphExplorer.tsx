@@ -7,7 +7,7 @@ import cytoscape, {
   type StylesheetJson,
 } from 'cytoscape';
 import { getCourse, getDependents, getPrerequisites, isAbortError } from '../api/client';
-import type { CourseDetail, CourseRelationshipResponse, GraphCommand, GraphNode, GraphResponse } from '../types';
+import type { CourseDetail, CourseRelationshipResponse, GraphCommand, GraphLayoutMode, GraphNode, GraphResponse } from '../types';
 
 const anyGroupColors = ['#4dffff', '#b56cff', '#ff6fd8', '#6dff8f', '#fff275', '#ff6b6b', '#4f8cff', '#00ffa3'];
 const selectedNodeGlow = {
@@ -49,12 +49,13 @@ interface GraphExplorerProps {
   command: GraphCommand;
   error: string | null;
   graph: GraphResponse;
+  layoutMode: GraphLayoutMode;
   loading: boolean;
   onRetry: () => void;
   onSelectCourse: (courseId: string) => void;
 }
 
-function GraphExplorer({ command, error, graph, loading, onRetry, onSelectCourse }: GraphExplorerProps) {
+function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, onSelectCourse }: GraphExplorerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cyRef = useRef<Core | null>(null);
   const hoverAbortRef = useRef<AbortController | null>(null);
@@ -280,7 +281,7 @@ function GraphExplorer({ command, error, graph, loading, onRetry, onSelectCourse
           },
         },
       ] as unknown as StylesheetJson,
-      layout: { name: 'preset' },
+      layout: { name: layoutMode === 'organic' ? 'cose' : 'preset', animate: false, fit: false },
       userPanningEnabled: true,
       userZoomingEnabled: true,
     });
@@ -418,7 +419,7 @@ function GraphExplorer({ command, error, graph, loading, onRetry, onSelectCourse
       cy.destroy();
       cyRef.current = null;
     };
-  }, [elements, onSelectCourse]);
+  }, [elements, layoutMode, onSelectCourse]);
 
   useEffect(() => {
     const cy = cyRef.current;
