@@ -77,12 +77,11 @@ function CourseDetail({
             onSelectCourse={onSelectCourse}
           />
 
-          <RelationshipSection
+          <DependentSection
             emptyText="No dependents found."
             icon={<ArrowUpFromLine aria-hidden="true" size={18} />}
             response={dependentResponse}
-            title="Dependents"
-            tooltipText="Dependents are courses that may require the selected course. Grouping shows how the selected course connects to later course options or requirement paths."
+            tooltipText="Dependents are courses that may require the selected course."
             onSelectCourse={onSelectCourse}
           />
         </>
@@ -157,6 +156,75 @@ function RelationshipSection({ emptyText, icon, response, title, tooltipText, on
       )}
     </section>
   );
+}
+
+interface DependentSectionProps {
+  emptyText: string;
+  icon: ReactNode;
+  response: CourseRelationshipResponse | null;
+  tooltipText: string;
+  onSelectCourse: (courseId: string) => void;
+}
+
+function DependentSection({ emptyText, icon, response, tooltipText, onSelectCourse }: DependentSectionProps) {
+  const options = dependentOptions(response);
+  const tooltipId = 'dependents-relationship-help';
+
+  return (
+    <section className="relationship-section">
+      <div className="section-title">
+        {icon}
+        <h3>Dependents</h3>
+        <span className="help-wrap">
+          <button
+            aria-describedby={tooltipId}
+            aria-label="Dependents help"
+            className="help-trigger"
+            type="button"
+          >
+            <HelpCircle aria-hidden="true" size={15} />
+          </button>
+          <span className="help-tooltip" id={tooltipId} role="tooltip">
+            {tooltipText}
+          </span>
+        </span>
+      </div>
+
+      {options.length === 0 ? (
+        <p className="empty-state">{emptyText}</p>
+      ) : (
+        <div className="option-row">
+          {options.map((option) => (
+            <button
+              className="course-chip"
+              disabled={option.external}
+              key={option.courseId}
+              title={option.external ? 'External dependent' : `Select ${option.courseId}`}
+              type="button"
+              onClick={() => onSelectCourse(option.courseId)}
+            >
+              {option.courseId}
+              {option.external ? <span>External</span> : null}
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function dependentOptions(response: CourseRelationshipResponse | null) {
+  const options = new Map<string, { courseId: string; external: boolean }>();
+
+  response?.groups.forEach((group) => {
+    group.options.forEach((option) => {
+      if (!options.has(option.courseId)) {
+        options.set(option.courseId, option);
+      }
+    });
+  });
+
+  return Array.from(options.values());
 }
 
 export default CourseDetail;

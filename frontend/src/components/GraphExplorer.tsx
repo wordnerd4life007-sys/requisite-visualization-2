@@ -67,6 +67,7 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
   const elements = useMemo<ElementDefinition[]>(() => {
     const groupRanks = groupRankByNode(graph);
     const positions = graphNodePositions(graph, groupRanks);
+    const dependentEdgeIds = dependentEdgeElementIds(graph);
 
     const nodeElements = graph.nodes.map((node) => ({
       classes: [
@@ -87,18 +88,23 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
       position: positions.get(node.id),
     }));
 
-    const edgeElements = graph.edges.map((edge, index) => ({
-      data: {
-        id: `${edge.from}-${edge.to}-${edge.groupIndex}-${index}`,
-        source: edge.from,
-        target: edge.to,
-        relationship: edge.relationship,
-        groupType: edge.groupType,
-        groupIndex: edge.groupIndex,
-        anyColor: groupColor(edge.groupIndex),
-        external: edge.external ?? false,
-      },
-    }));
+    const edgeElements = graph.edges.map((edge, index) => {
+      const id = edgeElementId(edge, index);
+
+      return {
+        data: {
+          id,
+          source: edge.from,
+          target: edge.to,
+          relationship: edge.relationship,
+          visualRole: dependentEdgeIds.has(id) ? 'dependent' : 'prerequisite',
+          groupType: edge.groupType,
+          groupIndex: edge.groupIndex,
+          anyColor: groupColor(edge.groupIndex),
+          external: edge.external ?? false,
+        },
+      };
+    });
 
     return [...nodeElements, ...edgeElements];
   }, [graph]);
@@ -216,6 +222,15 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
           },
         },
         {
+          selector: 'edge[visualRole = "dependent"]',
+          style: {
+            'line-color': '#556173',
+            opacity: 0.48,
+            'target-arrow-color': '#556173',
+            width: '2px',
+          },
+        },
+        {
           selector: '.is-faded',
           style: {
             opacity: 0.12,
@@ -278,6 +293,13 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
           style: {
             'line-color': '#00f5ff',
             'target-arrow-color': '#00f5ff',
+          },
+        },
+        {
+          selector: 'edge[visualRole = "dependent"]:selected',
+          style: {
+            'line-color': '#556173',
+            'target-arrow-color': '#556173',
           },
         },
       ] as unknown as StylesheetJson,
@@ -559,6 +581,51 @@ function RelationshipPreview({ label, values }: { label: string; values: string[
 
 function groupColor(groupIndex: number): string {
   return anyGroupColors[Math.abs(groupIndex) % anyGroupColors.length];
+}
+
+function edgeElementId(edge: GraphResponse['edges'][number], index: number): string {
+  return `${edge.from}-${edge.to}-${edge.groupIndex}-${index}`;
+}
+
+function dependentEdgeElementIds(graph: GraphResponse): Set<string> {
+  const dependentIds = new Set<string>();
+  const outgoing = new Map<string, Array<{ edge: GraphResponse['edges'][number]; index: number }>>();
+
+  graph.edges.forEach((edge, index) => {
+    if (edge.relationship === 'dependent') {
+      dependentIds.add(edgeElementId(edge, index));
+    }
+
+    const sourceEdges = outgoing.get(edge.from) ?? [];
+    sourceEdges.push({ edge, index });
+    outgoing.set(edge.from, sourceEdges);
+  });
+
+  if (graph.direction === 'prerequisites') {
+    return dependentIds;
+  }
+
+  const visited = new Set<string>([graph.rootCourseId]);
+  const queue = [graph.rootCourseId];
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+
+    if (!current) {
+      continue;
+    }
+
+    (outgoing.get(current) ?? []).forEach(({ edge, index }) => {
+      dependentIds.add(edgeElementId(edge, index));
+
+      if (!visited.has(edge.to)) {
+        visited.add(edge.to);
+        queue.push(edge.to);
+      }
+    });
+  }
+
+  return dependentIds;
 }
 
 function runGraphLayout(cy: Core, graph: GraphResponse) {
