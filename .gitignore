@@ -1,4 +1,4 @@
-.env
+*.env
 build/
 *.d
 *.o
@@ -9,3 +9,4 @@ __pycache__/
 requisite-visualization
 feedback.md
 review.md
+agent-builder/
