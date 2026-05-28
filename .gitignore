@@ -1,8 +1,15 @@
+# Environment files
 .env
-build/
+.env.*
+*.env
+*.env.*build/
 *.d
 *.o
 *.obj
 *.exe
+__pycache__/
+*.pyc
 requisite-visualization
 feedback.md
+review.md
+agent-builder/

@@ -1,0 +1,72 @@
+[
+  {
+    "_id": "cmpsc-8",
+    "subjectCode": "CMPSC",
+    "courseNumber": "8",
+    "longName": "Introduction to Computer Science",
+    "credits": { "creditHours": { "min": 4 } },
+    "college": "College of Engineering",
+    "departments": [{ "name": "Computer Science" }],
+    "requisites": {},
+    "effectiveStartDate": "2026-01-01"
+  },
+  {
+    "_id": "ece-15",
+    "subjectCode": "ECE",
+    "courseNumber": "15",
+    "longName": "Introduction to Computer Programming",
+    "credits": { "numberOfCredits": 4 },
+    "college": "College of Engineering",
+    "departments": ["Electrical and Computer Engineering"],
+    "requisites": {},
+    "effectiveStartDate": "2026-01-01"
+  },
+  {
+    "_id": "cmpsc-16-old",
+    "subjectCode": "CMPSC",
+    "courseNumber": "16",
+    "longName": "Old Problem Solving Title",
+    "credits": { "creditHours": { "min": 3 } },
+    "college": "College of Engineering",
+    "departments": [{ "name": "Computer Science" }],
+    "requisites": {},
+    "effectiveStartDate": "2025-01-01"
+  },
+  {
+    "_id": "cmpsc-16-new",
+    "subjectCode": "CMPSC",
+    "courseNumber": "16",
+    "longName": "Problem Solving With Computers I",
+    "credits": { "creditHours": { "min": 4 } },
+    "college": "College of Engineering",
+    "departments": [{ "name": "Computer Science" }, { "name": "Computer Science" }],
+    "requisites": {
+      "requisitesFreeform": {
+        "value": "Prerequisites: CMPSC 8 or ECE 15"
+      }
+    },
+    "effectiveStartDate": "2026-02-01"
+  },
+  {
+    "_id": "pstat-120a",
+    "subjectCode": "PSTAT",
+    "courseNumber": "120A",
+    "longName": "Probability and Statistics",
+    "credits": { "creditHours": { "min": 4 } },
+    "college": "College of Letters and Science",
+    "departments": [{ "label": "Statistics and Applied Probability" }],
+    "requisites": {},
+    "effectiveStartDate": "2026-01-01"
+  },
+  {
+    "_id": "tmp-492",
+    "subjectCode": "TMP",
+    "courseNumber": "492",
+    "globalCourseTitle": "TMP 492 - Special Topics",
+    "credits": {},
+    "college": "College of Engineering",
+    "departments": [{ "code": "Technology Management" }],
+    "requisites": {},
+    "effectiveStartDate": "2026-01-01"
+  }
+]

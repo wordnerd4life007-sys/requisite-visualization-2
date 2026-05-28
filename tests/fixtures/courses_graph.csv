@@ -1,0 +1,11 @@
+id,name,credits,college,prereqs
+CMPSC 5A,Introduction to Data Science 1,4,College of Engineering,
+CMPSC 5B,Introduction to Data Science 2,4,College of Engineering,CMPSC 5A
+CMPSC 8,Introduction to Computer Science,4,College of Engineering,
+ENGR 3,Introduction to Engineering,4,College of Engineering,
+ECE 3,Introduction to ECE,4,College of Engineering,
+CMPSC 16,Problem Solving with Computers I,4,College of Engineering,"| CMPSC 8, ENGR 3, ECE 3"
+CMPSC 24,Problem Solving with Computers II,4,College of Engineering,CMPSC 16
+CMPSC 32,Object Oriented Design and Implementation,4,College of Engineering,CMPSC 24
+CMPSC 40,Foundations of Computer Science,5,College of Engineering,CMPSC 16
+CMPSC 170,Advanced Topics Sample Course,4,College of Engineering,"CMPSC 40, CMPSC 32 | MATH 8, PSTAT 120A; ECE 139, PSTAT 120B"
