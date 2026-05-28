@@ -71,14 +71,18 @@ function App() {
   );
   const displayedCourses = useMemo(() => visibleCourses.slice(0, visibleCourseLimit), [visibleCourses]);
 
-  const visibleGraph = useMemo(
+  const filteredGraph = useMemo(
     () =>
       graph
-        ? progressiveDependentsGraph(filterGraph(graph, subject, selectedColleges, courseById), dependentDepthVisible)
+        ? filterGraph(graph, subject, selectedColleges, courseById)
         : emptyGraph(selectedCourseId ?? '', direction, depth),
-    [courseById, dependentDepthVisible, depth, direction, graph, selectedColleges, selectedCourseId, subject],
+    [courseById, depth, direction, graph, selectedColleges, selectedCourseId, subject],
   );
-  const maxDependentDepth = useMemo(() => dependentDistanceDepth(visibleGraph), [visibleGraph]);
+  const visibleGraph = useMemo(
+    () => progressiveDependentsGraph(filteredGraph, dependentDepthVisible),
+    [filteredGraph, dependentDepthVisible],
+  );
+  const maxDependentDepth = useMemo(() => dependentDistanceDepth(filteredGraph), [filteredGraph]);
   const canShowMoreDependents = direction !== 'prerequisites' && dependentDepthVisible < maxDependentDepth;
 
   const runGraphCommand = useCallback((action: GraphCommandAction) => {
