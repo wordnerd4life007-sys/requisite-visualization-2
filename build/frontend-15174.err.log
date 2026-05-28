@@ -1,0 +1,255 @@
+[2m10:37:48 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: The service is no longer running[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/ccorm/repos/requisite-visualization-1/frontend/src/components/GraphExplorer.tsx[39m
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:999:38
+      at sendRequest (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:880:36)
+      at start (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:998:9)
+      at Object.transform2 [as transform] (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:1059:5)
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:77
+      at new Promise (<anonymous>)
+      at Object.transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:36)
+      at transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2168:62)
+      at transformWithEsbuild (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6123:24)
+      at async TransformPluginContext.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6172:20)
+      at async EnvironmentPluginContainer.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m10:44:30 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: The service is no longer running
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/ccorm/repos/requisite-visualization-1/frontend/src/api/client.ts[39m
+[2m10:44:31 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: The service is no longer running
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/ccorm/repos/requisite-visualization-1/frontend/src/components/GraphExplorer.tsx[39m
+[2m10:44:31 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: The service is no longer running[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/ccorm/repos/requisite-visualization-1/frontend/src/api/client.ts[39m
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:999:38
+      at sendRequest (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:880:36)
+      at start (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:998:9)
+      at Object.transform2 [as transform] (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:1059:5)
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:77
+      at new Promise (<anonymous>)
+      at Object.transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:36)
+      at transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2168:62)
+      at transformWithEsbuild (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6123:24)
+      at async TransformPluginContext.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6172:20)
+      at async EnvironmentPluginContainer.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m10:45:00 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: The service is no longer running[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/ccorm/repos/requisite-visualization-1/frontend/src/components/CourseDetail.tsx[39m
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:999:38
+      at sendRequest (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:880:36)
+      at start (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:998:9)
+      at Object.transform2 [as transform] (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:1059:5)
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:77
+      at new Promise (<anonymous>)
+      at Object.transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:36)
+      at transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2168:62)
+      at transformWithEsbuild (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6123:24)
+      at async TransformPluginContext.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6172:20)
+      at async EnvironmentPluginContainer.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m11:01:31 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: The service is no longer running[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/ccorm/repos/requisite-visualization-1/frontend/src/components/GraphExplorer.tsx[39m
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:999:38
+      at sendRequest (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:880:36)
+      at start (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:998:9)
+      at Object.transform2 [as transform] (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:1059:5)
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:77
+      at new Promise (<anonymous>)
+      at Object.transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:36)
+      at transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2168:62)
+      at transformWithEsbuild (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6123:24)
+      at async TransformPluginContext.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6172:20)
+      at async EnvironmentPluginContainer.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m11:08:52 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: The service is no longer running[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/ccorm/repos/requisite-visualization-1/frontend/src/components/GraphExplorer.tsx[39m
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:999:38
+      at sendRequest (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:880:36)
+      at start (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:998:9)
+      at Object.transform2 [as transform] (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:1059:5)
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:77
+      at new Promise (<anonymous>)
+      at Object.transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:36)
+      at transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2168:62)
+      at transformWithEsbuild (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6123:24)
+      at async TransformPluginContext.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6172:20)
+      at async EnvironmentPluginContainer.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m11:09:53 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: The service is no longer running[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/ccorm/repos/requisite-visualization-1/frontend/src/components/GraphExplorer.tsx[39m
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:999:38
+      at sendRequest (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:880:36)
+      at start (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:998:9)
+      at Object.transform2 [as transform] (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:1059:5)
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:77
+      at new Promise (<anonymous>)
+      at Object.transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:36)
+      at transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2168:62)
+      at transformWithEsbuild (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6123:24)
+      at async TransformPluginContext.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6172:20)
+      at async EnvironmentPluginContainer.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m11:20:14 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: The service is no longer running[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/ccorm/repos/requisite-visualization-1/frontend/src/components/GraphExplorer.tsx[39m
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:999:38
+      at sendRequest (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:880:36)
+      at start (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:998:9)
+      at Object.transform2 [as transform] (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:1059:5)
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:77
+      at new Promise (<anonymous>)
+      at Object.transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:36)
+      at transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2168:62)
+      at transformWithEsbuild (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6123:24)
+      at async TransformPluginContext.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6172:20)
+      at async EnvironmentPluginContainer.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m11:24:07 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: The service is no longer running[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/ccorm/repos/requisite-visualization-1/frontend/src/components/GraphExplorer.tsx[39m
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:999:38
+      at sendRequest (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:880:36)
+      at start (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:998:9)
+      at Object.transform2 [as transform] (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:1059:5)
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:77
+      at new Promise (<anonymous>)
+      at Object.transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:36)
+      at transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2168:62)
+      at transformWithEsbuild (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6123:24)
+      at async TransformPluginContext.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6172:20)
+      at async EnvironmentPluginContainer.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m11:24:55 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: The service is no longer running[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/ccorm/repos/requisite-visualization-1/frontend/src/components/GraphExplorer.tsx[39m
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:999:38
+      at sendRequest (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:880:36)
+      at start (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:998:9)
+      at Object.transform2 [as transform] (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:1059:5)
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:77
+      at new Promise (<anonymous>)
+      at Object.transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:36)
+      at transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2168:62)
+      at transformWithEsbuild (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6123:24)
+      at async TransformPluginContext.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6172:20)
+      at async EnvironmentPluginContainer.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m12:55:35 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: The service is no longer running
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/ccorm/repos/requisite-visualization-1/frontend/src/api/client.ts[39m
+[2m12:55:35 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: The service is no longer running
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/ccorm/repos/requisite-visualization-1/frontend/src/components/CourseDetail.tsx[39m
+[2m12:55:35 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: The service is no longer running
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/ccorm/repos/requisite-visualization-1/frontend/src/components/GraphExplorer.tsx[39m
+[2m12:55:36 AM[22m [31m[1m[vite][22m[39m [31mInternal server error: The service is no longer running[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/ccorm/repos/requisite-visualization-1/frontend/src/api/client.ts[39m
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:999:38
+      at sendRequest (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:880:36)
+      at start (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:998:9)
+      at Object.transform2 [as transform] (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:1059:5)
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:77
+      at new Promise (<anonymous>)
+      at Object.transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:36)
+      at transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2168:62)
+      at transformWithEsbuild (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6123:24)
+      at async TransformPluginContext.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6172:20)
+      at async EnvironmentPluginContainer.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m12:55:36 AM[22m [31m[1m[vite][22m[39m [31mInternal server error: The service is no longer running[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/ccorm/repos/requisite-visualization-1/frontend/src/components/CourseDetail.tsx[39m
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:999:38
+      at sendRequest (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:880:36)
+      at start (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:998:9)
+      at Object.transform2 [as transform] (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:1059:5)
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:77
+      at new Promise (<anonymous>)
+      at Object.transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:36)
+      at transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2168:62)
+      at transformWithEsbuild (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6123:24)
+      at async TransformPluginContext.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6172:20)
+      at async EnvironmentPluginContainer.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m12:55:38 AM[22m [31m[1m[vite][22m[39m [31mInternal server error: The service is no longer running[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/ccorm/repos/requisite-visualization-1/frontend/src/components/GraphExplorer.tsx[39m
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:999:38
+      at sendRequest (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:880:36)
+      at start (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:998:9)
+      at Object.transform2 [as transform] (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:1059:5)
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:77
+      at new Promise (<anonymous>)
+      at Object.transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:36)
+      at transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2168:62)
+      at transformWithEsbuild (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6123:24)
+      at async TransformPluginContext.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6172:20)
+      at async EnvironmentPluginContainer.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m4:43:33 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: The service is no longer running[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/ccorm/repos/requisite-visualization-1/frontend/src/api/client.ts[39m
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:999:38
+      at sendRequest (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:880:36)
+      at start (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:998:9)
+      at Object.transform2 [as transform] (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:1059:5)
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:77
+      at new Promise (<anonymous>)
+      at Object.transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:36)
+      at transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2168:62)
+      at transformWithEsbuild (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6123:24)
+      at async TransformPluginContext.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6172:20)
+      at async EnvironmentPluginContainer.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m4:43:33 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: The service is no longer running[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/ccorm/repos/requisite-visualization-1/frontend/src/components/GraphExplorer.tsx[39m
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:999:38
+      at sendRequest (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:880:36)
+      at start (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:998:9)
+      at Object.transform2 [as transform] (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:1059:5)
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:77
+      at new Promise (<anonymous>)
+      at Object.transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:36)
+      at transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2168:62)
+      at transformWithEsbuild (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6123:24)
+      at async TransformPluginContext.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6172:20)
+      at async EnvironmentPluginContainer.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m4:43:33 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: The service is no longer running[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/ccorm/repos/requisite-visualization-1/frontend/src/components/CourseDetail.tsx[39m
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:999:38
+      at sendRequest (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:880:36)
+      at start (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:998:9)
+      at Object.transform2 [as transform] (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:1059:5)
+      at C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:77
+      at new Promise (<anonymous>)
+      at Object.transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2333:36)
+      at transform (C:\Users\ccorm\repos\requisite-visualization-1\frontend\node_modules\esbuild\lib\main.js:2168:62)
+      at transformWithEsbuild (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6123:24)
+      at async TransformPluginContext.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:6172:20)
+      at async EnvironmentPluginContainer.transform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/Users/ccorm/repos/requisite-visualization-1/frontend/node_modules/vite/dist/node/chunks/config.js:24562:20)

@@ -1,0 +1,11 @@
+http://127.0.0.1:8080 : The term 'http://127.0.0.1:8080' is not recognized as the name of a cmdlet, function, script 
+file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct 
+and try again.
+At line:1 char:24
++ $env:VITE_API_BASE_URL=http://127.0.0.1:8080; npm run dev -- --host 1 ...
++                        ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (http://127.0.0.1:8080:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+[2m5:51:32 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [31merror while updating dependencies:
+Error: EPERM: operation not permitted, rename 'C:\Users\ccorm\repos\requisite-visualization-1\frontend\.vite\deps_temp_634970da' -> 'C:\Users\ccorm\repos\requisite-visualization-1\frontend\.vite\deps'[39m
