@@ -128,8 +128,6 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
   );
 
   const elements = useMemo<ElementDefinition[]>(() => {
-    const dependentEdgeIds = dependentEdgeElementIds(graph);
-
     const nodeElements = graph.nodes.map((node) => ({
       classes: [
         node.id === graph.rootCourseId ? 'is-root' : '',
@@ -157,23 +155,23 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
 
     const edgeElements = graph.edges.map((edge, index) => {
       const id = edgeElementId(edge, index);
+      const isPrerequisiteEdge = edge.relationship === 'prerequisite';
 
       return {
         classes: [
-          'has-group',
-          edge.groupType === 'any' ? 'group-any' : '',
-          edge.groupType === 'all' ? 'group-all' : '',
+          isPrerequisiteEdge ? 'has-group' : '',
+          isPrerequisiteEdge && edge.groupType === 'any' ? 'group-any' : '',
+          isPrerequisiteEdge && edge.groupType === 'all' ? 'group-all' : '',
         ].filter(Boolean).join(' '),
         data: {
           id,
           source: edge.from,
           target: edge.to,
           relationship: edge.relationship,
-          visualRole: dependentEdgeIds.has(id) ? 'dependent' : 'prerequisite',
-          groupType: edge.groupType,
+          groupType: isPrerequisiteEdge ? edge.groupType : '',
           groupIndex: edge.groupIndex,
-          groupColor: groupColor(edge.groupIndex),
-          groupKey: graphGroupKey(edge),
+          groupColor: isPrerequisiteEdge ? groupColor(edge.groupIndex) : '',
+          groupKey: isPrerequisiteEdge ? graphGroupKey(edge) : '',
           external: edge.external ?? false,
         },
       };
@@ -364,13 +362,6 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
           },
         },
         {
-          selector: 'edge[visualRole = "dependent"]',
-          style: {
-            opacity: 0.4,
-            width: '2.2px',
-          },
-        },
-        {
           selector: '.is-faded',
           style: {
             opacity: 0.12,
@@ -437,13 +428,6 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
           style: {
             'line-color': '#4DFFFF',
             'target-arrow-color': '#4DFFFF',
-          },
-        },
-        {
-          selector: 'edge[visualRole = "dependent"]:selected',
-          style: {
-            'line-color': '#F8FBFF',
-            'target-arrow-color': '#F8FBFF',
           },
         },
       ] as unknown as StylesheetJson,
@@ -748,47 +732,6 @@ function graphGroupKey(edge: GraphResponse['edges'][number]): string {
 
 function edgeElementId(edge: GraphResponse['edges'][number], index: number): string {
   return graphEdgeElementId(edge, index);
-}
-
-function dependentEdgeElementIds(graph: GraphResponse): Set<string> {
-  const dependentIds = new Set<string>();
-  const outgoing = new Map<string, Array<{ edge: GraphResponse['edges'][number]; index: number }>>();
-
-  graph.edges.forEach((edge, index) => {
-    if (edge.relationship === 'dependent') {
-      dependentIds.add(edgeElementId(edge, index));
-    }
-
-    const sourceEdges = outgoing.get(edge.from) ?? [];
-    sourceEdges.push({ edge, index });
-    outgoing.set(edge.from, sourceEdges);
-  });
-
-  if (graph.direction === 'prerequisites') {
-    return dependentIds;
-  }
-
-  const visited = new Set<string>([graph.rootCourseId]);
-  const queue = [graph.rootCourseId];
-
-  while (queue.length > 0) {
-    const current = queue.shift();
-
-    if (!current) {
-      continue;
-    }
-
-    (outgoing.get(current) ?? []).forEach(({ edge, index }) => {
-      dependentIds.add(edgeElementId(edge, index));
-
-      if (!visited.has(edge.to)) {
-        visited.add(edge.to);
-        queue.push(edge.to);
-      }
-    });
-  }
-
-  return dependentIds;
 }
 
 function runGraphLayout(
@@ -1101,6 +1044,10 @@ function groupAccentByNode(graph: GraphResponse): Map<string, GraphGroupAccent> 
   const accents = new Map<string, GraphGroupAccent>();
 
   graph.edges.forEach((edge) => {
+    if (edge.relationship !== 'prerequisite') {
+      return;
+    }
+
     const accent = groupAccentForEdge(edge);
     setPreferredGroupAccent(accents, edge.from, accent);
     setPreferredGroupAccent(accents, edge.to, accent);
@@ -1139,6 +1086,10 @@ function groupRankByNode(graph: GraphResponse): Map<string, number> {
   const ranks = new Map<string, number>();
 
   graph.edges.forEach((edge) => {
+    if (edge.relationship !== 'prerequisite') {
+      return;
+    }
+
     const rank = edge.groupType === 'any' ? Math.abs(edge.groupIndex) : 1000 + Math.abs(edge.groupIndex);
     setLowestRank(ranks, edge.from, rank);
     setLowestRank(ranks, edge.to, rank);
