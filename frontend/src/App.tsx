@@ -42,7 +42,6 @@ function App() {
   const [depth, setDepth] = useState(2);
   const [graphCommand, setGraphCommand] = useState<GraphCommand>({ action: 'fit', nonce: 0 });
   const [layoutMode, setLayoutMode] = useState<GraphLayoutMode>('structured');
-  const [dependentDepthVisible, setDependentDepthVisible] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenFallback, setFullscreenFallback] = useState(false);
 
@@ -95,12 +94,6 @@ function App() {
         : emptyGraph(selectedCourseId ?? '', direction, depth),
     [courseById, depth, direction, graph, selectedColleges, selectedCourseId, subject],
   );
-  const visibleGraph = useMemo(
-    () => progressiveDependentsGraph(filteredGraph, dependentDepthVisible),
-    [filteredGraph, dependentDepthVisible],
-  );
-  const maxDependentDepth = useMemo(() => dependentDistanceDepth(filteredGraph), [filteredGraph]);
-  const canShowMoreDependents = direction !== 'prerequisites' && dependentDepthVisible < maxDependentDepth;
 
   const runGraphCommand = useCallback((action: GraphCommandAction) => {
     setGraphCommand((current) => ({ action, nonce: current.nonce + 1 }));
@@ -248,10 +241,6 @@ function App() {
   }, [depth, direction, graphReloadKey, selectedColleges, selectedCourseId, subject]);
 
   useEffect(() => {
-    setDependentDepthVisible(1);
-  }, [selectedCourseId, direction, subject, selectedColleges, depth]);
-
-  useEffect(() => {
     const handleFullscreenChange = () => {
       const active = document.fullscreenElement === graphPanelRef.current;
       setIsFullscreen(active);
@@ -306,7 +295,6 @@ function App() {
         setSelectedCourseId(path.from);
         setDirection('dependents');
         setDepth(Math.min(6, Math.max(1, path.distance)));
-        setDependentDepthVisible(Math.min(6, Math.max(1, path.distance)));
       }
     } catch (error: unknown) {
       setPathStatus('error');
@@ -492,11 +480,10 @@ function App() {
           aria-label="Prerequisite graph"
         >
           <ExplorerControls
-            canShowMoreDependents={canShowMoreDependents}
             depth={depth}
             direction={direction}
-            graphEdgeCount={visibleGraph.edges.length}
-            graphNodeCount={visibleGraph.nodes.length}
+            graphEdgeCount={filteredGraph.edges.length}
+            graphNodeCount={filteredGraph.nodes.length}
             isFullscreen={isFullscreen || fullscreenFallback}
             layoutMode={layoutMode}
             onDepthChange={setDepth}
@@ -504,7 +491,6 @@ function App() {
             onFit={() => runGraphCommand('fit')}
             onLayoutModeChange={setLayoutMode}
             onReset={() => runGraphCommand('reset')}
-            onShowMoreDependents={() => setDependentDepthVisible((current) => current + 1)}
             onToggleFullscreen={toggleFullscreen}
             onZoomIn={() => runGraphCommand('zoom-in')}
             onZoomOut={() => runGraphCommand('zoom-out')}
@@ -512,7 +498,7 @@ function App() {
           <GraphExplorer
             command={graphCommand}
             error={graphError}
-            graph={visibleGraph}
+            graph={filteredGraph}
             layoutMode={layoutMode}
             loading={graphStatus === 'loading'}
             onRetry={() => setGraphReloadKey((value) => value + 1)}
@@ -682,91 +668,6 @@ function errorMessage(error: unknown, fallback: string): string {
   }
 
   return error instanceof Error && error.message ? error.message : fallback;
-}
-
-function progressiveDependentsGraph(graph: GraphResponse, maxDependentDepth: number): GraphResponse {
-  if (maxDependentDepth < 1 || graph.direction === 'prerequisites') {
-    return graph;
-  }
-
-  const distances = new Map<string, number>([[graph.rootCourseId, 0]]);
-  const queue = [graph.rootCourseId];
-
-  while (queue.length > 0) {
-    const current = queue.shift();
-    if (!current) continue;
-    const currentDepth = distances.get(current) ?? 0;
-
-    for (const edge of graph.edges) {
-      if (edge.relationship !== 'dependent' || edge.from !== current) {
-        continue;
-      }
-
-      const nextDepth = currentDepth + 1;
-      if (nextDepth > maxDependentDepth) {
-        continue;
-      }
-
-      const existing = distances.get(edge.to);
-      if (existing === undefined || nextDepth < existing) {
-        distances.set(edge.to, nextDepth);
-        queue.push(edge.to);
-      }
-    }
-  }
-
-  const keptNodes = new Set(
-    graph.nodes
-      .filter((node) => {
-        const nodeDepth = distances.get(node.id);
-        return node.id === graph.rootCourseId || nodeDepth !== undefined || !hasDependentInboundEdge(node.id, graph.edges);
-      })
-      .map((node) => node.id),
-  );
-
-  const edges = graph.edges.filter((edge) => {
-    if (!keptNodes.has(edge.from) || !keptNodes.has(edge.to)) {
-      return false;
-    }
-
-    if (edge.relationship !== 'dependent') {
-      return true;
-    }
-
-    return (distances.get(edge.to) ?? Number.POSITIVE_INFINITY) <= maxDependentDepth;
-  });
-
-  return { ...graph, nodes: graph.nodes.filter((node) => keptNodes.has(node.id)), edges };
-}
-
-function dependentDistanceDepth(graph: GraphResponse): number {
-  const distances = new Map<string, number>([[graph.rootCourseId, 0]]);
-  const queue = [graph.rootCourseId];
-  let maxDepth = 0;
-
-  while (queue.length > 0) {
-    const current = queue.shift();
-    if (!current) continue;
-    const currentDepth = distances.get(current) ?? 0;
-    maxDepth = Math.max(maxDepth, currentDepth);
-    for (const edge of graph.edges) {
-      if (edge.relationship !== 'dependent' || edge.from !== current) {
-        continue;
-      }
-      const nextDepth = currentDepth + 1;
-      const existing = distances.get(edge.to);
-      if (existing === undefined || nextDepth < existing) {
-        distances.set(edge.to, nextDepth);
-        queue.push(edge.to);
-      }
-    }
-  }
-
-  return maxDepth;
-}
-
-function hasDependentInboundEdge(nodeId: string, edges: GraphResponse['edges']): boolean {
-  return edges.some((edge) => edge.relationship === 'dependent' && edge.to === nodeId);
 }
 
 export default App;

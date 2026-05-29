@@ -7,10 +7,8 @@ interface ExplorerControlsProps {
   graphNodeCount: number;
   graphEdgeCount: number;
   layoutMode: GraphLayoutMode;
-  canShowMoreDependents: boolean;
   isFullscreen: boolean;
   onLayoutModeChange: (layoutMode: GraphLayoutMode) => void;
-  onShowMoreDependents: () => void;
   onDirectionChange: (direction: GraphDirection) => void;
   onDepthChange: (depth: number) => void;
   onFit: () => void;
@@ -32,10 +30,8 @@ function ExplorerControls({
   graphNodeCount,
   graphEdgeCount,
   layoutMode,
-  canShowMoreDependents,
   isFullscreen,
   onLayoutModeChange,
-  onShowMoreDependents,
   onDirectionChange,
   onDepthChange,
   onFit,
@@ -143,11 +139,6 @@ function ExplorerControls({
       <div className="graph-metrics" aria-label="Visible graph size">
         <span>{graphNodeCount} nodes</span>
         <span>{graphEdgeCount} edges</span>
-        {canShowMoreDependents ? (
-          <button className="show-more-button" type="button" onClick={onShowMoreDependents}>
-            Show more dependents
-          </button>
-        ) : null}
       </div>
     </div>
   );
