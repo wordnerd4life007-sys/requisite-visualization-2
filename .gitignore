@@ -2,7 +2,9 @@
 .env
 .env.*
 *.env
-*.env.*build/
+*.env.*
+build/
+*.log
 *.d
 *.o
 *.obj
