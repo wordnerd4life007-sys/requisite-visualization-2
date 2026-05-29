@@ -69,7 +69,8 @@ std::string courseFieldsJson(const CourseRecord& course, bool includeName) {
     std::ostringstream out;
     out << "\"id\":" << jsonString(course.id);
     if (includeName) {
-        out << ",\"name\":" << jsonString(course.name);
+        out << ",\"name\":" << jsonString(course.name)
+            << ",\"description\":" << jsonStringOrNull(course.description);
     }
     out << ",\"credits\":" << creditsJson(course.credits)
         << ",\"college\":" << jsonStringOrNull(course.college)
@@ -203,6 +204,17 @@ std::string dependentResponseJson(
     }
 
     out << "],\"flattenedCourseIds\":" << stringArrayJson(flattenedCourseIds)
+        << "}";
+    return out.str();
+}
+
+std::string pathResponseJson(const PathResult& path) {
+    std::ostringstream out;
+    out << "{\"from\":" << jsonString(path.from)
+        << ",\"to\":" << jsonString(path.to)
+        << ",\"reachable\":" << (path.reachable ? "true" : "false")
+        << ",\"distance\":" << path.distance
+        << ",\"courseIds\":" << stringArrayJson(path.courseIds)
         << "}";
     return out.str();
 }

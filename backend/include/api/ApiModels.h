@@ -10,6 +10,7 @@ namespace api {
 struct CourseRecord {
     std::string id;
     std::string name;
+    std::string description;
     std::optional<double> credits;
     std::string college;
     std::string department;
@@ -65,6 +66,14 @@ struct GraphResult {
     int depth = 1;
     std::vector<GraphNode> nodes;
     std::vector<GraphEdge> edges;
+};
+
+struct PathResult {
+    std::string from;
+    std::string to;
+    bool reachable = false;
+    int distance = -1;
+    std::vector<std::string> courseIds;
 };
 
 struct ApiResponse {

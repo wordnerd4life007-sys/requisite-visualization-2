@@ -201,6 +201,7 @@ bool CsvCatalog::loadFromFile(const std::string& path, std::string* errorMessage
     const int prereqsIndex = columnIndex(headers, "prereqs", 4);
     const int subjectIndex = columnIndex(headers, "subject", -1);
     const int departmentIndex = columnIndex(headers, "department", -1);
+    const int descriptionIndex = columnIndex(headers, "description", -1);
 
     std::vector<CourseRecord> courses;
     std::unordered_map<std::string, std::vector<PrerequisiteGroup>> groupsByCourse;
@@ -220,6 +221,7 @@ bool CsvCatalog::loadFromFile(const std::string& path, std::string* errorMessage
         CourseRecord course;
         course.id = id;
         course.name = fieldAt(fields, nameIndex);
+        course.description = fieldAt(fields, descriptionIndex);
         course.credits = parseCredits(fieldAt(fields, creditsIndex));
         course.college = fieldAt(fields, collegeIndex);
         course.department = fieldAt(fields, departmentIndex);

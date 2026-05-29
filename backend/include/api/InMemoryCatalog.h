@@ -21,6 +21,7 @@ public:
     std::vector<PrerequisiteGroup> prerequisiteGroupsFor(const std::string& id) const override;
     std::vector<std::string> flattenedPrerequisitesFor(const std::string& id) const override;
     std::vector<DependentRelationship> dependentsFor(const std::string& id) const override;
+    PathResult shortestPath(const std::string& fromCourseId, const std::string& toCourseId) const override;
 
     GraphResult graphFor(
         const std::string& rootCourseId,

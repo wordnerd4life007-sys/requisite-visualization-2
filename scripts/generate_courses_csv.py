@@ -29,6 +29,7 @@ CATALOG_COLUMNS = [
     "longName",
     "globalCourseTitle",
     "name",
+    "description",
     "credits",
     "college",
     "departments",
@@ -259,6 +260,21 @@ def clean_text(value: str) -> str:
     value = value.replace("\u2013", "-").replace("\u2014", "-")
     value = value.replace("\u2019", "'")
     return re.sub(r"\s+", " ", value).strip()
+
+
+def course_description(course: dict) -> str:
+    value = course.get("description") or ""
+    if isinstance(value, dict):
+        for key in ("value", "plainText", "html", "description"):
+            if value.get(key):
+                value = value[key]
+                break
+        else:
+            value = ""
+    elif isinstance(value, list):
+        value = " ".join(str(item) for item in value if item)
+
+    return clean_text(str(value)).strip(" ;")
 
 
 def standardize_subject_names(text: str) -> str:
@@ -566,6 +582,7 @@ def generate_rows(records: list[dict], colleges: set[str] | None = None) -> tupl
         college = (course.get("college") or "").strip()
         subject = normalize_subject(course.get("subjectCode") or "")
         department = department_label(course)
+        description = course_description(course)
         and_prereqs, or_groups, flags = parse_prereqs(raw_requisite_text(course), compiled_token, subjects)
         and_prereqs, or_groups = remove_self_reference(own_id, and_prereqs, or_groups)
         flag_counts.update(flags)
@@ -589,6 +606,7 @@ def generate_rows(records: list[dict], colleges: set[str] | None = None) -> tupl
                 format_prereqs(and_prereqs, or_groups),
                 subject,
                 department,
+                description,
             ]
         )
 
@@ -609,7 +627,7 @@ def generate_rows(records: list[dict], colleges: set[str] | None = None) -> tupl
 def write_courses_csv(rows: list[list[str]], output_path: Path) -> None:
     with output_path.open("w", newline="", encoding="utf-8") as output:
         writer = csv.writer(output)
-        writer.writerow(["id", "name", "credits", "college", "prereqs", "subject", "department"])
+        writer.writerow(["id", "name", "credits", "college", "prereqs", "subject", "department", "description"])
         writer.writerows(rows)
 
 

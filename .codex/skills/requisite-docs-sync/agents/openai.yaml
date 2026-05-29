@@ -1,0 +1,4 @@
+interface:
+  display_name: "Requisite Docs Sync"
+  short_description: "Keep README, docs, and AGENTS aligned with reality."
+  default_prompt: "Use this skill for README, architecture, data-quality, product-decision, or AGENTS.md updates."

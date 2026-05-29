@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS courses (
     college TEXT NOT NULL,
     subject TEXT NOT NULL DEFAULT '',
     department TEXT NOT NULL DEFAULT '',
+    description TEXT NOT NULL DEFAULT '',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT courses_id_not_blank CHECK (btrim(id) <> ''),
@@ -16,6 +17,7 @@ CREATE TABLE IF NOT EXISTS courses (
 
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS subject TEXT NOT NULL DEFAULT '';
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS department TEXT NOT NULL DEFAULT '';
+ALTER TABLE courses ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '';
 ALTER TABLE courses DROP CONSTRAINT IF EXISTS courses_credits_check;
 ALTER TABLE courses ALTER COLUMN credits TYPE TEXT USING credits::text;
 ALTER TABLE courses ALTER COLUMN credits SET DEFAULT '';
@@ -69,10 +71,11 @@ SELECT
     course_id AS target_course_id
 FROM course_prerequisite_options;
 
-COMMENT ON TABLE courses IS 'Course catalog rows: id, name, raw catalog credits text, college, subject, and department.';
+COMMENT ON TABLE courses IS 'Course catalog rows: id, name, description, raw catalog credits text, college, subject, and department.';
 COMMENT ON COLUMN courses.credits IS 'Catalog credit value as emitted by the CSV; blank and nonnumeric values are allowed.';
 COMMENT ON COLUMN courses.subject IS 'Catalog subject label used by API filters and graph metadata.';
 COMMENT ON COLUMN courses.department IS 'Catalog department label used by API metadata responses.';
+COMMENT ON COLUMN courses.description IS 'Catalog course description used by API metadata responses and free-text search.';
 COMMENT ON TABLE course_prerequisite_groups IS 'Prerequisite expression groups. all groups require every option; any groups require one option.';
 COMMENT ON TABLE course_prerequisite_options IS 'Prerequisite course ids inside each requirement group. prerequisite_id may reference courses outside this local catalog.';
 COMMENT ON VIEW course_prerequisites IS 'Expanded prerequisite rows with group semantics preserved.';

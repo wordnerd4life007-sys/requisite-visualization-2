@@ -1,4 +1,4 @@
-import { Maximize2, Minimize2, Minus, Plus, RotateCcw, Scan } from 'lucide-react';
+import { GitBranch, Maximize2, Minimize2, Minus, Network, Plus, RotateCcw, Scan } from 'lucide-react';
 import type { GraphDirection, GraphLayoutMode } from '../types';
 
 interface ExplorerControlsProps {
@@ -77,10 +77,10 @@ function ExplorerControls({
           <span>{depth}</span>
           <button
             aria-label="Increase depth"
-            disabled={depth >= 4}
+            disabled={depth >= 6}
             title="Increase depth"
             type="button"
-            onClick={() => onDepthChange(Math.min(4, depth + 1))}
+            onClick={() => onDepthChange(Math.min(6, depth + 1))}
           >
             <Plus aria-hidden="true" size={16} />
           </button>
@@ -89,10 +89,28 @@ function ExplorerControls({
 
       <div className="control-cluster">
         <span className="control-label">Layout</span>
-        <select value={layoutMode} onChange={(event) => onLayoutModeChange(event.target.value as GraphLayoutMode)}>
-          <option value="structured">Structured</option>
-          <option value="organic">Organic</option>
-        </select>
+        <div className="segmented-control layout-mode-control" role="group" aria-label="Graph layout">
+          <button
+            aria-pressed={layoutMode === 'structured'}
+            className={layoutMode === 'structured' ? 'is-active' : ''}
+            title="Structured layout"
+            type="button"
+            onClick={() => onLayoutModeChange('structured')}
+          >
+            <GitBranch aria-hidden="true" size={15} />
+            <span>Structured</span>
+          </button>
+          <button
+            aria-pressed={layoutMode === 'organic'}
+            className={layoutMode === 'organic' ? 'is-active' : ''}
+            title="Organic layout"
+            type="button"
+            onClick={() => onLayoutModeChange('organic')}
+          >
+            <Network aria-hidden="true" size={15} />
+            <span>Organic</span>
+          </button>
+        </div>
       </div>
 
       <div className="control-cluster">

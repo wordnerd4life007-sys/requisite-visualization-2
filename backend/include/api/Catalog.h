@@ -28,6 +28,7 @@ public:
     virtual std::vector<PrerequisiteGroup> prerequisiteGroupsFor(const std::string& id) const = 0;
     virtual std::vector<std::string> flattenedPrerequisitesFor(const std::string& id) const = 0;
     virtual std::vector<DependentRelationship> dependentsFor(const std::string& id) const = 0;
+    virtual PathResult shortestPath(const std::string& fromCourseId, const std::string& toCourseId) const = 0;
 
     virtual GraphResult graphFor(
         const std::string& rootCourseId,

@@ -1,6 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Filter, Search } from 'lucide-react';
-import { API_BASE_URL, getCourse, getDependents, getGraph, getPrerequisites, isAbortError, listCourses } from './api/client';
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronDown, Filter, Route, Search } from 'lucide-react';
+import {
+  API_BASE_URL,
+  getCourse,
+  getDependents,
+  getGraph,
+  getPath,
+  getPrerequisites,
+  isAbortError,
+  listCourses,
+} from './api/client';
 import CourseDetail from './components/CourseDetail';
 import CourseSearch from './components/CourseSearch';
 import ExplorerControls from './components/ExplorerControls';
@@ -16,6 +25,7 @@ import type {
   GraphNode,
   GraphResponse,
   LoadStatus,
+  PathResponse,
 } from './types';
 
 const initialCourseId = 'CMPSC 16';
@@ -54,6 +64,12 @@ function App() {
   const [graphError, setGraphError] = useState<string | null>(null);
   const [graphReloadKey, setGraphReloadKey] = useState(0);
 
+  const [pathFrom, setPathFrom] = useState(initialCourseId);
+  const [pathTo, setPathTo] = useState('');
+  const [pathStatus, setPathStatus] = useState<LoadStatus>('idle');
+  const [pathError, setPathError] = useState<string | null>(null);
+  const [pathResponse, setPathResponse] = useState<PathResponse | null>(null);
+
   const filterSource = filterCatalog.length > 0 ? filterCatalog : courses;
   const courseById = useMemo(() => new Map(filterSource.map((course) => [course.id, course])), [filterSource]);
   const subjects = useMemo(
@@ -70,6 +86,7 @@ function App() {
     [courses, query, selectedColleges, subject],
   );
   const displayedCourses = useMemo(() => visibleCourses.slice(0, visibleCourseLimit), [visibleCourses]);
+  const courseSuggestions = useMemo(() => visibleCourses.slice(0, 80), [visibleCourses]);
 
   const filteredGraph = useMemo(
     () =>
@@ -256,6 +273,54 @@ function App() {
     );
   };
 
+  const selectedCollegeLabel =
+    selectedColleges.length === 0
+      ? 'All colleges'
+      : selectedColleges.length === 1
+        ? selectedColleges[0]
+        : `${selectedColleges.length} colleges`;
+
+  const submitPathSearch = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const from = normalizeCourseInput(pathFrom);
+    const to = normalizeCourseInput(pathTo);
+
+    if (!from || !to) {
+      setPathStatus('error');
+      setPathError('Choose both courses.');
+      setPathResponse(null);
+      return;
+    }
+
+    setPathStatus('loading');
+    setPathError(null);
+    setPathResponse(null);
+
+    try {
+      const path = await getPath(from, to);
+      setPathResponse(path);
+      setPathStatus('success');
+
+      if (path.reachable) {
+        setSelectedCourseId(path.from);
+        setDirection('dependents');
+        setDepth(Math.min(6, Math.max(1, path.distance)));
+        setDependentDepthVisible(Math.min(6, Math.max(1, path.distance)));
+      }
+    } catch (error: unknown) {
+      setPathStatus('error');
+      setPathError(errorMessage(error, 'Unable to load the course path.'));
+      setPathResponse(null);
+    }
+  };
+
+  const useSelectedCourseAsPathStart = () => {
+    if (selectedCourseId) {
+      setPathFrom(selectedCourseId);
+    }
+  };
+
   const toggleFullscreen = async () => {
     const panel = graphPanelRef.current;
 
@@ -311,6 +376,8 @@ function App() {
               <Search aria-hidden="true" size={18} />
               <span className="sr-only">Search courses</span>
               <input
+                autoComplete="off"
+                list="course-suggestions"
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
@@ -321,7 +388,7 @@ function App() {
             <label className="subject-filter">
               <Filter aria-hidden="true" size={17} />
               <span className="sr-only">Subject filter</span>
-              <select value={subject} onChange={(event) => setSubject(event.target.value)}>
+              <select autoComplete="off" value={subject} onChange={(event) => setSubject(event.target.value)}>
                 <option value="all">All subjects</option>
                 {subjects.map((subjectCode) => (
                   <option key={subjectCode} value={subjectCode}>
@@ -333,27 +400,72 @@ function App() {
 
             <fieldset className="college-filter">
               <legend>Colleges</legend>
-              <div className="college-options">
-                <button
-                  className={selectedColleges.length === 0 ? 'is-active' : ''}
-                  type="button"
-                  onClick={() => setSelectedColleges([])}
-                >
-                  All
-                </button>
-                {colleges.map((college) => (
-                  <label className="college-option" key={college}>
-                    <input
-                      checked={selectedColleges.includes(college)}
-                      type="checkbox"
-                      onChange={() => toggleCollege(college)}
-                    />
-                    <span>{college}</span>
-                  </label>
-                ))}
-              </div>
+              <details className="college-menu">
+                <summary>
+                  <span>{selectedCollegeLabel}</span>
+                  <ChevronDown aria-hidden="true" size={16} />
+                </summary>
+                <div className="college-menu-panel">
+                  <button
+                    className={selectedColleges.length === 0 ? 'is-active' : ''}
+                    type="button"
+                    onClick={() => setSelectedColleges([])}
+                  >
+                    All colleges
+                  </button>
+                  {colleges.map((college) => (
+                    <label className="college-option" key={college}>
+                      <input
+                        checked={selectedColleges.includes(college)}
+                        type="checkbox"
+                        onChange={() => toggleCollege(college)}
+                      />
+                      <span>{college}</span>
+                    </label>
+                  ))}
+                </div>
+              </details>
             </fieldset>
           </div>
+
+          <form className="path-finder" onSubmit={submitPathSearch}>
+            <div className="path-heading">
+              <Route aria-hidden="true" size={17} />
+              <span>Path</span>
+            </div>
+            <label>
+              <span>From</span>
+              <input
+                autoComplete="off"
+                list="course-suggestions"
+                value={pathFrom}
+                onChange={(event) => setPathFrom(event.target.value)}
+              />
+            </label>
+            <label>
+              <span>To</span>
+              <input
+                autoComplete="off"
+                list="course-suggestions"
+                value={pathTo}
+                onChange={(event) => setPathTo(event.target.value)}
+              />
+            </label>
+            <div className="path-actions">
+              <button type="button" onClick={useSelectedCourseAsPathStart}>
+                Use selected
+              </button>
+              <button disabled={pathStatus === 'loading'} type="submit">
+                Route
+              </button>
+            </div>
+            <PathResult
+              response={pathResponse}
+              error={pathError}
+              loading={pathStatus === 'loading'}
+              onSelectCourse={setSelectedCourseId}
+            />
+          </form>
 
           <CourseSearch
             courses={displayedCourses}
@@ -364,6 +476,14 @@ function App() {
             onRetry={() => setCourseReloadKey((value) => value + 1)}
             onSelectCourse={setSelectedCourseId}
           />
+
+          <datalist id="course-suggestions">
+            {courseSuggestions.map((course) => (
+              <option key={course.id} value={course.id}>
+                {course.name}
+              </option>
+            ))}
+          </datalist>
         </aside>
 
         <section
@@ -414,6 +534,48 @@ function App() {
   );
 }
 
+interface PathResultProps {
+  response: PathResponse | null;
+  error: string | null;
+  loading: boolean;
+  onSelectCourse: (courseId: string) => void;
+}
+
+function PathResult({ response, error, loading, onSelectCourse }: PathResultProps) {
+  if (loading) {
+    return <p className="path-result">Loading path...</p>;
+  }
+
+  if (error) {
+    return <p className="path-result is-error">{error}</p>;
+  }
+
+  if (!response) {
+    return <p className="path-result">No path loaded.</p>;
+  }
+
+  if (!response.reachable) {
+    return (
+      <p className="path-result">
+        No dependent path from {response.from} to {response.to}.
+      </p>
+    );
+  }
+
+  return (
+    <div className="path-result is-success" aria-label="Shortest dependent path">
+      <span>{response.distance} steps</span>
+      <div className="path-chain">
+        {response.courseIds.map((courseId, index) => (
+          <button key={`${courseId}-${index}`} type="button" onClick={() => onSelectCourse(courseId)}>
+            {courseId}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function catalogStatusText(status: LoadStatus, count: number): string {
   if (status === 'loading' || status === 'idle') {
     return 'Loading catalog';
@@ -442,7 +604,7 @@ function filterCourses(
         return true;
       }
 
-      return [course.id, course.name, course.subject, course.department, course.college]
+      return [course.id, course.name, course.description, course.subject, course.department, course.college]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()
@@ -508,6 +670,10 @@ function uniqueSorted(values: string[]): string[] {
 
 function subjectFromId(courseId: string): string {
   return courseId.split(' ')[0] || courseId;
+}
+
+function normalizeCourseInput(value: string): string {
+  return value.trim().split(/\s+/).join(' ').toUpperCase();
 }
 
 function errorMessage(error: unknown, fallback: string): string {

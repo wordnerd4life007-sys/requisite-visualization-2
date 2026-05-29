@@ -22,6 +22,7 @@ private:
     ApiResponse handleCourses(const QueryParams& query) const;
     ApiResponse handleCourseRoute(const std::string& path) const;
     ApiResponse handleGraph(const QueryParams& query) const;
+    ApiResponse handlePaths(const QueryParams& query) const;
 
     CourseSearchFilters parseCourseFilters(const QueryParams& query, std::string& errorCode, std::string& errorMessage) const;
 };

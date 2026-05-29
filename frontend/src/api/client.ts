@@ -4,6 +4,7 @@ import type {
   CourseRelationshipResponse,
   CourseSummary,
   GraphDirection,
+  PathResponse,
   PrerequisiteGroupType,
   GraphResponse,
 } from '../types';
@@ -62,6 +63,14 @@ interface ApiDependentResponse {
   courseId?: unknown;
   relationships?: unknown;
   flattenedCourseIds?: unknown;
+}
+
+interface ApiPathResponse {
+  from?: unknown;
+  to?: unknown;
+  reachable?: unknown;
+  distance?: unknown;
+  courseIds?: unknown;
 }
 
 export class ApiError extends Error {
@@ -125,6 +134,19 @@ export async function getGraph(params: GraphParams, signal?: AbortSignal): Promi
       colleges: params.colleges,
     },
     signal,
+  );
+}
+
+export async function getPath(from: string, to: string, signal?: AbortSignal): Promise<PathResponse> {
+  return normalizePathResponse(
+    await fetchJson<ApiPathResponse>(
+      '/paths',
+      {
+        from: normalizeCourseIdInput(from),
+        to: normalizeCourseIdInput(to),
+      },
+      signal,
+    ),
   );
 }
 
@@ -205,6 +227,7 @@ function normalizeCourseSummary(course: CourseSummary): CourseSummary {
   return {
     id: course.id,
     name: course.name,
+    description: typeof course.description === 'string' ? course.description : undefined,
     credits: course.credits ?? null,
     college: course.college,
     department: course.department ?? null,
@@ -230,6 +253,24 @@ function normalizeDependentResponse(response: ApiDependentResponse): CourseRelat
     courseId,
     groups: relationships.map((relationship, index) => normalizeDependentRelationship(relationship, index)),
     flattenedCourseIds: normalizeStringArray(response.flattenedCourseIds),
+  };
+}
+
+function normalizePathResponse(response: ApiPathResponse): PathResponse {
+  if (typeof response.from !== 'string' || typeof response.to !== 'string') {
+    throw new ApiError('Unexpected path response.', 'invalid_response', 0);
+  }
+
+  const distance = typeof response.distance === 'number' && Number.isFinite(response.distance)
+    ? response.distance
+    : -1;
+
+  return {
+    from: response.from,
+    to: response.to,
+    reachable: Boolean(response.reachable),
+    distance,
+    courseIds: normalizeStringArray(response.courseIds),
   };
 }
 
@@ -315,6 +356,10 @@ function normalizeGroupIndex(value: unknown, fallback: number): number {
 
 function normalizeStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+}
+
+function normalizeCourseIdInput(value: string): string {
+  return value.trim().split(/\s+/).join(' ');
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {

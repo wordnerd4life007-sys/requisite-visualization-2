@@ -28,5 +28,6 @@ std::string dependentResponseJson(
     const std::vector<std::string>& flattenedCourseIds
 );
 std::string graphResponseJson(const GraphResult& graph);
+std::string pathResponseJson(const PathResult& path);
 
 } // namespace api

@@ -53,6 +53,27 @@ def fetch_json(base_url: str, path: str) -> dict:
         raise AssertionError(f"{url} returned invalid JSON: {body}") from exc
 
 
+def fetch_error(base_url: str, path: str, expected_status: int) -> dict:
+    url = base_url.rstrip("/") + path
+    try:
+        with urlopen(url, timeout=3) as response:
+            body = response.read().decode("utf-8")
+            raise AssertionError(f"{url} returned HTTP {response.status}, expected {expected_status}: {body}")
+    except HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        if exc.code != expected_status:
+            raise AssertionError(f"{url} returned HTTP {exc.code}, expected {expected_status}: {body}") from exc
+
+    try:
+        payload = json.loads(body)
+    except json.JSONDecodeError as exc:
+        raise AssertionError(f"{url} returned invalid JSON: {body}") from exc
+
+    if not isinstance(payload.get("error"), dict):
+        raise AssertionError(f"{url} returned unexpected error payload: {payload}")
+    return payload
+
+
 def wait_for_health(base_url: str, process: subprocess.Popen | None) -> dict:
     deadline = time.monotonic() + 10
     last_error = ""
@@ -125,7 +146,7 @@ def assert_course_summary(value: dict) -> str:
     course_id = value.get("id")
     if not isinstance(course_id, str) or not course_id:
         raise AssertionError(f"course summary missing id: {value}")
-    for field in ("name", "college", "subject"):
+    for field in ("name", "description", "college", "subject"):
         if field not in value:
             raise AssertionError(f"course summary missing {field}: {value}")
     return course_id
@@ -169,6 +190,14 @@ def main() -> int:
                 raise AssertionError(f"graph response missing {field}: {graph}")
 
         if launched_fixture_server:
+            description_search = fetch_json(
+                base_url,
+                f"/courses?q={quote('prerequisite planning', safe='')}&limit=5",
+            )
+            description_ids = [assert_course_summary(course) for course in description_search.get("courses", [])]
+            if description_ids != ["CMPSC 170"]:
+                raise AssertionError(f"fixture description search was unexpected: {description_search}")
+
             expected_edge = {
                 "from": "MATH 8",
                 "to": "CMPSC 170",
@@ -178,6 +207,39 @@ def main() -> int:
             }
             if expected_edge not in graph.get("edges", []):
                 raise AssertionError(f"fixture graph did not preserve expected group-index edge: {graph}")
+
+            path = fetch_json(
+                base_url,
+                f"/paths?from={quote('CMPSC 8', safe='')}&to={quote('CMPSC 170', safe='')}",
+            )
+            expected_path = ["CMPSC 8", "CMPSC 16", "CMPSC 40", "CMPSC 170"]
+            if path.get("courseIds") != expected_path or path.get("distance") != 3 or not path.get("reachable"):
+                raise AssertionError(f"fixture path returned unexpected payload: {path}")
+
+            unreachable = fetch_json(
+                base_url,
+                f"/paths?from={quote('CMPSC 170', safe='')}&to={quote('CMPSC 8', safe='')}",
+            )
+            if unreachable != {
+                "from": "CMPSC 170",
+                "to": "CMPSC 8",
+                "reachable": False,
+                "distance": -1,
+                "courseIds": [],
+            }:
+                raise AssertionError(f"fixture unreachable path response was unexpected: {unreachable}")
+
+            missing_to = fetch_error(base_url, f"/paths?from={quote('CMPSC 8', safe='')}", 400)
+            if missing_to.get("error", {}).get("code") != "missing_to":
+                raise AssertionError(f"missing to path error was unexpected: {missing_to}")
+
+            unknown_from = fetch_error(
+                base_url,
+                f"/paths?from={quote('NOTREAL 1', safe='')}&to={quote('CMPSC 170', safe='')}",
+                404,
+            )
+            if unknown_from.get("error", {}).get("code") != "from_course_not_found":
+                raise AssertionError(f"unknown from path error was unexpected: {unknown_from}")
 
         print(f"PASS: API smoke checks passed for {base_url}")
         return 0

@@ -5,6 +5,7 @@ export type GraphLayoutMode = 'structured' | 'organic';
 export interface CourseSummary {
   id: string;
   name: string;
+  description?: string;
   credits: number | null;
   college: string;
   department: string | null;
@@ -57,6 +58,14 @@ export interface GraphResponse {
   depth: number;
   nodes: GraphNode[];
   edges: GraphEdge[];
+}
+
+export interface PathResponse {
+  from: string;
+  to: string;
+  reachable: boolean;
+  distance: number;
+  courseIds: string[];
 }
 
 export interface ApiErrorBody {

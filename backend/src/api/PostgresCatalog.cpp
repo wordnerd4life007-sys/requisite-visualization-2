@@ -72,6 +72,25 @@ bool runTupleQuery(PGconn* connection, const std::string& sql, ResultHandle& res
     return false;
 }
 
+bool columnExists(PGconn* connection, const std::string& columnName, bool& exists, std::string* errorMessage) {
+    ResultHandle result;
+    const std::string sql =
+        "SELECT EXISTS ("
+        "SELECT 1 "
+        "FROM information_schema.columns "
+        "WHERE table_schema = 'public' "
+        "AND table_name = 'courses' "
+        "AND column_name = '" + columnName + "'"
+        ")";
+
+    if (!runTupleQuery(connection, sql, result, errorMessage)) {
+        return false;
+    }
+
+    exists = PQntuples(result.value) > 0 && std::string(PQgetvalue(result.value, 0, 0)) == "t";
+    return true;
+}
+
 } // namespace
 
 bool PostgresCatalog::load(const DatabaseConfig& config, std::string* errorMessage) {
@@ -94,15 +113,26 @@ bool PostgresCatalog::load(const DatabaseConfig& config, std::string* errorMessa
         return false;
     }
 
+    bool hasSubjectColumn = false;
+    bool hasDepartmentColumn = false;
+    bool hasDescriptionColumn = false;
+    if (!columnExists(connection.value, "subject", hasSubjectColumn, errorMessage)
+        || !columnExists(connection.value, "department", hasDepartmentColumn, errorMessage)
+        || !columnExists(connection.value, "description", hasDescriptionColumn, errorMessage)) {
+        return false;
+    }
+
+    const std::string coursesSql =
+        "SELECT id, name, credits, college, "
+        + std::string(hasSubjectColumn ? "subject" : "'' AS subject")
+        + ", "
+        + std::string(hasDepartmentColumn ? "department" : "'' AS department")
+        + ", "
+        + std::string(hasDescriptionColumn ? "description" : "'' AS description")
+        + " FROM courses ORDER BY id";
+
     ResultHandle coursesResult;
-    if (!runTupleQuery(
-            connection.value,
-            "SELECT id, name, credits, college, subject, department "
-            "FROM courses "
-            "ORDER BY id",
-            coursesResult,
-            errorMessage
-        )) {
+    if (!runTupleQuery(connection.value, coursesSql, coursesResult, errorMessage)) {
         return false;
     }
 
@@ -116,6 +146,7 @@ bool PostgresCatalog::load(const DatabaseConfig& config, std::string* errorMessa
         course.college = pgValue(coursesResult.value, row, 3);
         course.subject = pgValue(coursesResult.value, row, 4);
         course.department = pgValue(coursesResult.value, row, 5);
+        course.description = pgValue(coursesResult.value, row, 6);
         courses.push_back(course);
     }
 

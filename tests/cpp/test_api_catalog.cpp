@@ -125,6 +125,20 @@ int main() {
     if (course != nullptr) {
         expectEqual("subject falls back from course id", course->subject, std::string("CMPSC"));
         expectEqual("college metadata loads", course->college, std::string("College of Engineering"));
+        expectEqual(
+            "description metadata loads",
+            course->description,
+            std::string("Advanced graph traversal prerequisite planning sample")
+        );
+    }
+
+    api::CourseSearchFilters descriptionFilters;
+    descriptionFilters.query = "prerequisite planning";
+    descriptionFilters.limit = 5;
+    const std::vector<api::CourseRecord> descriptionMatches = catalog.searchCourses(descriptionFilters);
+    expectEqual("description search returns one match", descriptionMatches.size(), static_cast<std::size_t>(1));
+    if (!descriptionMatches.empty()) {
+        expectEqual("description search finds target course", descriptionMatches[0].id, std::string("CMPSC 170"));
     }
 
     const std::vector<api::PrerequisiteGroup> groups = catalog.prerequisiteGroupsFor("CMPSC 170");
@@ -164,6 +178,21 @@ int main() {
         "both graph does not include sibling prerequisites of a dependent",
         !hasGraphNode(bothGraph, "ENGR 3") && !hasGraphNode(bothGraph, "ECE 3")
     );
+
+    const api::PathResult reachablePath = catalog.shortestPath("CMPSC 8", "CMPSC 170");
+    expectTrue("dependent path reports reachable target", reachablePath.reachable);
+    expectEqual("dependent path distance counts edges", reachablePath.distance, 3);
+    expectTrue(
+        "dependent path includes expected course ids",
+        reachablePath.courseIds.size() == 4
+            && reachablePath.courseIds.front() == "CMPSC 8"
+            && reachablePath.courseIds.back() == "CMPSC 170"
+    );
+
+    const api::PathResult unreachablePath = catalog.shortestPath("CMPSC 170", "CMPSC 8");
+    expectTrue("reverse prerequisite path is not reachable", !unreachablePath.reachable);
+    expectEqual("unreachable path distance is negative", unreachablePath.distance, -1);
+    expectTrue("unreachable path has no course ids", unreachablePath.courseIds.empty());
 
     return failures == 0 ? 0 : 1;
 }

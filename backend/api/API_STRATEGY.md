@@ -52,16 +52,17 @@ GET /courses/:id
 GET /courses/:id/prerequisites
 GET /courses/:id/dependents
 GET /graph?course=CMPSC%2016&direction=both&depth=3
+GET /paths?from=CMPSC%208&to=CMPSC%20189A
 ```
 
 Query behavior:
 
-- `/courses` supports optional `q`, `subjects`, `colleges`, and `limit` query parameters. `subject` and `college` are accepted as aliases. `limit` defaults to `100` and may be as high as `20000` so the frontend can populate full-catalog filters.
+- `/courses` supports optional `q`, `subjects`, `colleges`, and `limit` query parameters. `q` searches id, name, description, subject, college, and department when those fields are available. `subject` and `college` are accepted as aliases. `limit` defaults to `100` and may be as high as `20000` so the frontend can populate full-catalog filters.
 - `:id` uses the normalized catalog id such as `CMPSC 16`.
 - `direction` accepts `prerequisites`, `dependents`, or `both`.
 - `depth` defaults to `1` and should have a conservative maximum.
 - `/graph` supports optional `subjects` and `colleges` filters. The root course is always included when found.
-- `/paths` is still planned, but is not part of the first implemented server.
+- `/paths` follows the dependent direction from prerequisite/course to courses that depend on it, validates both endpoints as known catalog courses, and returns the shortest BFS path when reachable.
 
 ## JSON Contracts
 
@@ -71,6 +72,7 @@ Course summary:
 {
   "id": "CMPSC 16",
   "name": "Problem Solving With Computers I",
+  "description": "Introduction to computational problem solving.",
   "credits": 4,
   "college": "College of Engineering",
   "department": null,
@@ -84,6 +86,7 @@ Course detail:
 {
   "id": "CMPSC 16",
   "name": "Problem Solving With Computers I",
+  "description": "Introduction to computational problem solving.",
   "credits": 4,
   "college": "College of Engineering",
   "department": null,
@@ -179,6 +182,8 @@ Path response:
   "courseIds": ["CMPSC 8", "CMPSC 16", "CMPSC 24", "CMPSC 130A", "CMPSC 189A"]
 }
 ```
+
+When no dependent-chain path exists, `reachable` is `false`, `distance` is `-1`, and `courseIds` is empty.
 
 Error response:
 

@@ -156,6 +156,69 @@ std::vector<DependentRelationship> InMemoryCatalog::dependentsFor(const std::str
     return found == dependentsByPrerequisite_.end() ? std::vector<DependentRelationship>{} : found->second;
 }
 
+PathResult InMemoryCatalog::shortestPath(const std::string& fromCourseId, const std::string& toCourseId) const {
+    PathResult path;
+    path.from = normalizeCourseId(fromCourseId);
+    path.to = normalizeCourseId(toCourseId);
+
+    if (!containsCourse(path.from) || !containsCourse(path.to)) {
+        return path;
+    }
+
+    if (path.from == path.to) {
+        path.reachable = true;
+        path.distance = 0;
+        path.courseIds = {path.from};
+        return path;
+    }
+
+    std::queue<std::string> pending;
+    std::unordered_set<std::string> visited;
+    std::unordered_map<std::string, std::string> previous;
+
+    pending.push(path.from);
+    visited.insert(path.from);
+
+    while (!pending.empty() && visited.find(path.to) == visited.end()) {
+        const std::string current = pending.front();
+        pending.pop();
+
+        for (const DependentRelationship& dependent : dependentsFor(current)) {
+            if (!containsCourse(dependent.courseId) || !visited.insert(dependent.courseId).second) {
+                continue;
+            }
+
+            previous[dependent.courseId] = current;
+            if (dependent.courseId == path.to) {
+                break;
+            }
+
+            pending.push(dependent.courseId);
+        }
+    }
+
+    if (visited.find(path.to) == visited.end()) {
+        return path;
+    }
+
+    std::vector<std::string> reversed;
+    for (std::string current = path.to; !current.empty(); current = previous.count(current) == 0 ? std::string{} : previous[current]) {
+        reversed.push_back(current);
+        if (current == path.from) {
+            break;
+        }
+    }
+
+    std::reverse(reversed.begin(), reversed.end());
+    path.courseIds = reversed;
+    path.reachable = !path.courseIds.empty() && path.courseIds.front() == path.from && path.courseIds.back() == path.to;
+    path.distance = path.reachable ? static_cast<int>(path.courseIds.size()) - 1 : -1;
+    if (!path.reachable) {
+        path.courseIds.clear();
+    }
+    return path;
+}
+
 GraphResult InMemoryCatalog::graphFor(
     const std::string& rootCourseId,
     const std::string& direction,
@@ -349,6 +412,7 @@ bool InMemoryCatalog::courseMatchesFilters(const CourseRecord& course, const Cou
     if (!filters.query.empty()
         && !containsCaseInsensitive(course.id, filters.query)
         && !containsCaseInsensitive(course.name, filters.query)
+        && !containsCaseInsensitive(course.description, filters.query)
         && !containsCaseInsensitive(course.subject, filters.query)
         && !containsCaseInsensitive(course.college, filters.query)
         && !containsCaseInsensitive(course.department, filters.query)) {

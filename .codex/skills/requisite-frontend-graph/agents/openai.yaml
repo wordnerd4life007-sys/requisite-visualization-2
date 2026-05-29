@@ -1,0 +1,4 @@
+interface:
+  display_name: "Requisite Frontend Graph"
+  short_description: "Work on the React/Cytoscape course explorer UI."
+  default_prompt: "Use this skill for frontend graph, fetch integration, filtering, fullscreen, styling, or visualization interaction work."

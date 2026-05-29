@@ -61,10 +61,12 @@ class GenerateCoursesCsvTests(unittest.TestCase):
                 "| CMPSC 8, ECE 15",
                 "CMPSC",
                 "Computer Science",
+                "Computational problem solving with control flow and functions.",
             ],
         )
         self.assertEqual(rows_by_id["PSTAT 120A"][3], "College of Letters and Science")
         self.assertEqual(rows_by_id["PSTAT 120A"][6], "Statistics and Applied Probability")
+        self.assertEqual(rows_by_id["PSTAT 120A"][7], "Probability models and statistical inference.")
         self.assertEqual(rows_by_id["TMP 492"][1], "Special Topics")
         self.assertEqual(rows_by_id["TMP 492"][2], "")
         self.assertEqual(rows_by_id["TMP 492"][6], "Technology Management")
@@ -90,7 +92,7 @@ class GenerateCoursesCsvTests(unittest.TestCase):
                 reader = csv.reader(input_file)
                 self.assertEqual(
                     next(reader),
-                    ["id", "name", "credits", "college", "prereqs", "subject", "department"],
+                    ["id", "name", "credits", "college", "prereqs", "subject", "department", "description"],
                 )
 
     def test_course_id_normalizes_w_subjects(self):

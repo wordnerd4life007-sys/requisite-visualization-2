@@ -262,6 +262,10 @@ ApiResponse ApiHandlers::handleRequest(const std::string& method, const std::str
         return handleGraph(query);
     }
 
+    if (path == "/paths") {
+        return handlePaths(query);
+    }
+
     return errorResponse(404, "not_found", "Endpoint not found.");
 }
 
@@ -379,6 +383,28 @@ ApiResponse ApiHandlers::handleGraph(const QueryParams& query) const {
     }
 
     return jsonResponse(200, graphResponseJson(catalog_.graphFor(courseId, direction, depth, subjects, colleges)));
+}
+
+ApiResponse ApiHandlers::handlePaths(const QueryParams& query) const {
+    const std::string fromCourseId = normalizeCourseId(firstValue(query, "from"));
+    if (fromCourseId.empty()) {
+        return errorResponse(400, "missing_from", "The from query parameter is required.");
+    }
+
+    const std::string toCourseId = normalizeCourseId(firstValue(query, "to"));
+    if (toCourseId.empty()) {
+        return errorResponse(400, "missing_to", "The to query parameter is required.");
+    }
+
+    if (!catalog_.containsCourse(fromCourseId)) {
+        return errorResponse(404, "from_course_not_found", "From course not found.");
+    }
+
+    if (!catalog_.containsCourse(toCourseId)) {
+        return errorResponse(404, "to_course_not_found", "To course not found.");
+    }
+
+    return jsonResponse(200, pathResponseJson(catalog_.shortestPath(fromCourseId, toCourseId)));
 }
 
 CourseSearchFilters ApiHandlers::parseCourseFilters(
