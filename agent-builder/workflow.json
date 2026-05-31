@@ -1,0 +1,193 @@
+{
+  "name": "requisite-visualization-cleanup-agent-workflow",
+  "version": "1.0.0",
+  "purpose": "Coordinate disciplined repository cleanup and contributor-readiness work for requisite-visualization.",
+  "runtime_targets": [
+    "OpenAI Agent Builder",
+    "OpenAI Agents SDK",
+    "Codex role-prompt orchestration"
+  ],
+  "entrypoint": "cleanup-coordinator.md",
+  "context": [
+    "AGENTS.md",
+    "agent-builder/requisite-visualization-local-context.md",
+    "agent-builder/agent-builder.md",
+    "agent-builder/good-practices.md"
+  ],
+  "state_objects": {
+    "TaskBrief": [
+      "user_goal",
+      "branch",
+      "worktree_caveats",
+      "allowed_scope",
+      "requested_release_action"
+    ],
+    "RepoRead": [
+      "files_inspected",
+      "current_behavior",
+      "risks",
+      "relevant_commands"
+    ],
+    "CleanupBacklog": [
+      "ranked_tasks",
+      "parking_lot",
+      "deferred_decisions",
+      "recommended_first_task"
+    ],
+    "ApprovedTask": [
+      "title",
+      "goal",
+      "allowed_files_or_lane",
+      "behavior_change_policy",
+      "generated_data_policy",
+      "verification_commands",
+      "commit_preference"
+    ],
+    "ChangeSet": [
+      "files_changed",
+      "behavior_changed",
+      "tests_added_or_updated",
+      "docs_updated"
+    ],
+    "VerificationReport": [
+      "commands_run",
+      "failures",
+      "skipped_checks",
+      "confidence"
+    ],
+    "ReviewReport": [
+      "blocking_findings",
+      "non_blocking_findings",
+      "test_coverage",
+      "scope_control",
+      "recommendation"
+    ],
+    "ReleaseDecision": [
+      "eligible_to_commit",
+      "eligible_to_push",
+      "target_branch",
+      "remaining_risks"
+    ]
+  },
+  "agents": [
+    {
+      "id": "coordinator",
+      "contract": "agent-builder/cleanup-coordinator.md",
+      "access": "read_route_release",
+      "owns_final_response": true,
+      "responsibilities": [
+        "classify the task",
+        "load required context",
+        "enforce approval and release gates",
+        "handoff to specialist agents"
+      ],
+      "handoffs": [
+        "audit_planner",
+        "implementer",
+        "verifier",
+        "reviewer",
+        "docs_curator"
+      ]
+    },
+    {
+      "id": "audit_planner",
+      "contract": "agent-builder/cleanup-audit-planner.md",
+      "access": "read_only",
+      "input": "TaskBrief",
+      "output": "CleanupBacklog"
+    },
+    {
+      "id": "implementer",
+      "contract": "agent-builder/cleanup-implementer.md",
+      "access": "scoped_write",
+      "input": "ApprovedTask",
+      "output": "ChangeSet"
+    },
+    {
+      "id": "verifier",
+      "contract": "agent-builder/cleanup-verifier.md",
+      "access": "read_only_commands",
+      "input": "ChangeSet",
+      "output": "VerificationReport"
+    },
+    {
+      "id": "reviewer",
+      "contract": "agent-builder/cleanup-reviewer.md",
+      "access": "read_only",
+      "input": [
+        "ApprovedTask",
+        "ChangeSet",
+        "VerificationReport"
+      ],
+      "output": "ReviewReport"
+    },
+    {
+      "id": "docs_curator",
+      "contract": "agent-builder/cleanup-docs-curator.md",
+      "access": "scoped_docs_write",
+      "input": [
+        "ApprovedTask",
+        "ChangeSet",
+        "ReviewReport"
+      ],
+      "output": "ChangeSet"
+    }
+  ],
+  "gates": [
+    {
+      "id": "approval_gate",
+      "before": "implementer",
+      "requires": "ApprovedTask",
+      "policy": "Do not edit files until the approved task includes goal, scope, behavior policy, generated-data policy, verification commands, and commit preference."
+    },
+    {
+      "id": "release_gate",
+      "before": "commit_or_push",
+      "requires": [
+        "VerificationReport",
+        "ReviewReport"
+      ],
+      "policy": "Commit or push only when checks are acceptable, review has no blocking findings, staged diff is focused, and the user explicitly requested the release action."
+    }
+  ],
+  "guardrails": [
+    "Do not read, print, summarize, or commit secret values from .env.",
+    "Do not run destructive database commands unless explicitly requested.",
+    "Do not rewrite generated or data-heavy files unless the approved task names them.",
+    "Do not push to main unless the user explicitly asks in the current task.",
+    "Keep unrelated worktree changes out of staged diffs and commits.",
+    "Stop when implementation would broaden beyond the approved scope."
+  ],
+  "verification": {
+    "docs_only": [
+      "Inspect markdown and JSON syntax",
+      "Run git diff review"
+    ],
+    "backend_cpp": [
+      "mingw32-make test-cpp"
+    ],
+    "api": [
+      "mingw32-make test-api-smoke"
+    ],
+    "python_data": [
+      "python -m unittest discover -s tests/python",
+      "python .\\scripts\\import_courses_to_postgres.py --dry-run"
+    ],
+    "frontend": [
+      "npm run build"
+    ]
+  },
+  "release_policy": {
+    "default_branch": "main",
+    "feature_branch": "feature/advisor",
+    "commit_requires": [
+      "status check before staging",
+      "focused staged diff",
+      "verification result recorded"
+    ],
+    "push_requires": [
+      "explicit user request",
+      "no blocking review findings"
+    ]
+  }
+}
