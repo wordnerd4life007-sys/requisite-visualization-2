@@ -13,12 +13,41 @@ import { graphEdgeElementId, graphPathFocus } from '../utils/graphPathFocus';
 
 type CytoscapeLayoutOptions = Parameters<Core['layout']>[0];
 
-const groupColors = ['#4DFFFF', '#B56CFF', '#FF6FD8', '#6DFF8F', '#FFF275', '#FF6B6B'];
+const graphTheme = {
+  edge: '#C7D0DD',
+  groupColors: ['#7AA2F7', '#A78BFA', '#E09CB5', '#56C2A3', '#D6AA43', '#E06C75'],
+  hoverBorder: '#7AA2F7',
+  nodeBorder: '#C7D0DD',
+  nodeFill: '#10151D',
+  nodeText: '#F3F6FA',
+  nodeTextOutline: '#080B10',
+  rootBorder: '#56C2A3',
+} as const;
 const selectedNodeGlow = {
-  'underlay-color': '#6DFF8F',
+  'underlay-color': graphTheme.rootBorder,
   'underlay-opacity': 0.28,
   'underlay-padding': '10px',
   'underlay-shape': 'ellipse',
+};
+const selectedNodeStyle = {
+  'background-color': graphTheme.nodeFill,
+  'border-color': graphTheme.rootBorder,
+  'border-opacity': 1,
+  color: graphTheme.nodeText,
+  'text-outline-color': graphTheme.nodeTextOutline,
+  'text-outline-width': '3px',
+  ...selectedNodeGlow,
+};
+const rootNodeStyle = {
+  ...selectedNodeStyle,
+  'border-style': 'solid',
+  'border-width': '5px',
+  'font-family': 'Inter, Segoe UI, Arial, sans-serif',
+  'font-size': '12px',
+  height: '90px',
+  width: '90px',
+  'z-index': 20,
+  'z-index-compare': 'manual',
 };
 
 const hoverDelayMs = 250;
@@ -228,11 +257,11 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
         {
           selector: 'node',
           style: {
-            'background-color': '#050606',
-            'border-color': '#F8FBFF',
+            'background-color': graphTheme.nodeFill,
+            'border-color': graphTheme.nodeBorder,
             'border-opacity': 0.24,
             'border-width': '2px',
-            color: '#F8FBFF',
+            color: graphTheme.nodeText,
             'font-size': '11.5px',
             'font-weight': 'bold',
             height: '76px',
@@ -241,7 +270,7 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
             shape: 'ellipse',
             'text-halign': 'center',
             'text-max-width': '68px',
-            'text-outline-color': '#050606',
+            'text-outline-color': graphTheme.nodeTextOutline,
             'text-outline-width': '2px',
             'text-valign': 'center',
             'text-wrap': 'wrap',
@@ -275,53 +304,21 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
         },
         {
           selector: 'node.is-root',
-          style: {
-            'background-color': '#050606',
-            'border-color': '#6DFF8F',
-            'border-opacity': 1,
-            'border-style': 'solid',
-            'border-width': '5px',
-            color: '#F8FBFF',
-            'font-family': 'Inter, Segoe UI, Arial, sans-serif',
-            'font-size': '12px',
-            height: '90px',
-            'text-outline-color': '#050606',
-            'text-outline-width': '3px',
-            width: '90px',
-            'z-index': 20,
-            'z-index-compare': 'manual',
-            ...selectedNodeGlow,
-          },
+          style: rootNodeStyle,
         },
         {
           selector: 'node.is-external',
           style: {
-            'background-color': '#050606',
-            'border-color': '#F8FBFF',
+            'background-color': graphTheme.nodeFill,
+            'border-color': graphTheme.nodeBorder,
             'border-opacity': 0.42,
             'border-style': 'dashed',
-            color: '#F8FBFF',
+            color: graphTheme.nodeText,
           },
         },
         {
           selector: 'node.is-root.is-external',
-          style: {
-            'background-color': '#050606',
-            'border-color': '#6DFF8F',
-            'border-opacity': 1,
-            'border-style': 'solid',
-            'border-width': '5px',
-            color: '#F8FBFF',
-            'font-family': 'Inter, Segoe UI, Arial, sans-serif',
-            'font-size': '12px',
-            height: '90px',
-            'text-outline-color': '#050606',
-            'text-outline-width': '3px',
-            width: '90px',
-            'z-index': 20,
-            'z-index-compare': 'manual',
-            ...selectedNodeGlow,
-          },
+          style: rootNodeStyle,
         },
         {
           selector: 'edge',
@@ -329,9 +326,9 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
             'arrow-scale': 1.42,
             'curve-style': 'bezier',
             'line-cap': 'round',
-            'line-color': '#F8FBFF',
+            'line-color': graphTheme.edge,
             opacity: 0.28,
-            'target-arrow-color': '#F8FBFF',
+            'target-arrow-color': graphTheme.edge,
             'target-arrow-fill': 'filled',
             'target-arrow-shape': 'triangle-tee',
             'target-distance-from-node': '2px',
@@ -377,10 +374,10 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
         {
           selector: 'node.is-hovered',
           style: {
-            'border-color': '#4DFFFF',
+            'border-color': graphTheme.hoverBorder,
             'border-opacity': 1,
             'border-width': '4px',
-            'underlay-color': '#4DFFFF',
+            'underlay-color': graphTheme.hoverBorder,
             'underlay-opacity': 0.24,
             'underlay-padding': '8px',
             'underlay-shape': 'ellipse',
@@ -389,45 +386,24 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
         {
           selector: 'node.is-neighbor',
           style: {
-            'border-color': '#F8FBFF',
+            'border-color': graphTheme.nodeBorder,
             'border-opacity': 1,
             'border-width': '3px',
           },
         },
         {
           selector: 'node:selected',
-          style: {
-            'background-color': '#050606',
-            'border-color': '#6DFF8F',
-            'border-opacity': 1,
-            color: '#F8FBFF',
-            'text-outline-color': '#050606',
-            'text-outline-width': '3px',
-            ...selectedNodeGlow,
-          },
+          style: selectedNodeStyle,
         },
         {
           selector: 'node.is-root:selected',
-          style: {
-            'background-color': '#050606',
-            'border-color': '#6DFF8F',
-            'border-opacity': 1,
-            'border-style': 'solid',
-            color: '#F8FBFF',
-            height: '90px',
-            'text-outline-color': '#050606',
-            'text-outline-width': '3px',
-            width: '90px',
-            'z-index': 20,
-            'z-index-compare': 'manual',
-            ...selectedNodeGlow,
-          },
+          style: rootNodeStyle,
         },
         {
           selector: 'edge:selected',
           style: {
-            'line-color': '#4DFFFF',
-            'target-arrow-color': '#4DFFFF',
+            'line-color': graphTheme.hoverBorder,
+            'target-arrow-color': graphTheme.hoverBorder,
           },
         },
       ] as unknown as StylesheetJson,
@@ -723,7 +699,7 @@ function RelationshipPreview({ label, values }: { label: string; values: string[
 }
 
 function groupColor(groupIndex: number): string {
-  return groupColors[Math.abs(groupIndex) % groupColors.length];
+  return graphTheme.groupColors[Math.abs(groupIndex) % graphTheme.groupColors.length];
 }
 
 function graphGroupKey(edge: GraphResponse['edges'][number]): string {

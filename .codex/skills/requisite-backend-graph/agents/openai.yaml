@@ -1,4 +1,4 @@
 interface:
   display_name: "Requisite Backend Graph"
-  short_description: "Work on C++ graph traversal and catalog semantics."
-  default_prompt: "Use this skill for backend graph, catalog, prerequisite parser, path, cycle, or grouped prerequisite work."
+  short_description: "Maintain graph traversal and catalog logic"
+  default_prompt: "Use $requisite-backend-graph to update or verify prerequisite graph and catalog behavior."

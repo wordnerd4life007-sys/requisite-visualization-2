@@ -1,4 +1,4 @@
 interface:
   display_name: "Requisite Docs Sync"
-  short_description: "Keep README, docs, and AGENTS aligned with reality."
-  default_prompt: "Use this skill for README, architecture, data-quality, product-decision, or AGENTS.md updates."
+  short_description: "Keep repo docs aligned with behavior"
+  default_prompt: "Use $requisite-docs-sync to update requisite-visualization docs so they match implemented behavior."

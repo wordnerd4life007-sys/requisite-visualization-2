@@ -1,4 +1,4 @@
 interface:
   display_name: "Requisite Catalog Import"
-  short_description: "Work on Coursedog CSV generation and PostgreSQL import."
-  default_prompt: "Use this skill for catalog generation, import scripts, schema, seeds, data quality, or external prerequisite modeling."
+  short_description: "Maintain catalog generation and DB import"
+  default_prompt: "Use $requisite-catalog-import to update or verify catalog generation and PostgreSQL import behavior."

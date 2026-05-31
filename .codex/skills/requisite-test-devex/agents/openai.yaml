@@ -1,4 +1,4 @@
 interface:
   display_name: "Requisite Test Devex"
-  short_description: "Work on tests, Makefile targets, CI, and dev workflow."
-  default_prompt: "Use this skill for test harnesses, build targets, smoke checks, fixtures, CI, or developer-experience changes."
+  short_description: "Maintain tests and developer workflow"
+  default_prompt: "Use $requisite-test-devex to update tests, checks, or local developer workflow for requisite-visualization."

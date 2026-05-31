@@ -1,37 +1,45 @@
 :root {
-  color: #f8fbff;
-  background: #050606;
+  color: #f3f6fa;
+  background: #0d1016;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --cyan: #4dffff;
-  --violet: #b56cff;
-  --pink: #ff6fd8;
-  --green: #6dff8f;
-  --yellow: #fff275;
-  --coral: #ff6b6b;
-  --bg: #050606;
-  --graph-bg: #010202;
-  --panel: #0b0e0f;
-  --panel-muted: rgba(77, 255, 255, 0.045);
-  --panel-strong: rgba(181, 108, 255, 0.11);
-  --panel-toolbar: #070909;
-  --border: rgba(77, 255, 255, 0.16);
-  --border-strong: rgba(181, 108, 255, 0.42);
-  --text: #f8fbff;
-  --text-muted: rgba(248, 251, 255, 0.64);
-  --text-soft: rgba(248, 251, 255, 0.82);
-  --accent: var(--cyan);
-  --accent-strong: var(--green);
-  --accent-soft: rgba(77, 255, 255, 0.11);
-  --accent-warm: var(--yellow);
-  --danger: var(--coral);
-  --danger-soft: rgba(255, 107, 107, 0.13);
-  --scroll-track: #070909;
-  --scroll-thumb: rgba(77, 255, 255, 0.34);
-  --scroll-thumb-hover: rgba(181, 108, 255, 0.54);
+  --bg: #0d1016;
+  --graph-bg: #080b10;
+  --panel: #141922;
+  --panel-muted: rgba(226, 232, 240, 0.055);
+  --panel-toolbar: #10151d;
+  --border: rgba(199, 208, 221, 0.16);
+  --border-strong: rgba(122, 162, 247, 0.42);
+  --text: #f3f6fa;
+  --text-muted: rgba(226, 232, 240, 0.64);
+  --text-soft: rgba(226, 232, 240, 0.84);
+  --text-dim: rgba(226, 232, 240, 0.5);
+  --accent: #7aa2f7;
+  --accent-soft: rgba(122, 162, 247, 0.14);
+  --accent-border: rgba(122, 162, 247, 0.36);
+  --accent-strong: #56c2a3;
+  --accent-strong-soft: rgba(86, 194, 163, 0.14);
+  --accent-strong-border: rgba(86, 194, 163, 0.38);
+  --accent-warm: #d6aa43;
+  --accent-warm-soft: rgba(214, 170, 67, 0.16);
+  --accent-warm-text: #ffe2a3;
+  --accent-alt: #a78bfa;
+  --accent-alt-soft: rgba(167, 139, 250, 0.14);
+  --accent-alt-text: #e4dcff;
+  --danger-soft: rgba(224, 108, 117, 0.15);
+  --danger-border: rgba(224, 108, 117, 0.56);
+  --danger-overlay: rgba(40, 20, 24, 0.94);
+  --danger-text: #ffd9dc;
+  --surface-subtle: rgba(226, 232, 240, 0.045);
+  --surface-hover: rgba(122, 162, 247, 0.1);
+  --overlay-bg: rgba(13, 16, 22, 0.88);
+  --floating-panel: rgba(16, 21, 29, 0.96);
+  --scroll-track: #0f141c;
+  --scroll-thumb: rgba(122, 162, 247, 0.34);
+  --scroll-thumb-hover: rgba(86, 194, 163, 0.48);
 }
 
 * {
@@ -276,7 +284,7 @@ h1 {
 }
 
 .search-field input::placeholder {
-  color: rgba(248, 251, 255, 0.5);
+  color: var(--text-dim);
 }
 
 .search-field input {
@@ -288,8 +296,8 @@ h1 {
 
 .subject-filter select {
   background:
-    linear-gradient(45deg, transparent 50%, var(--cyan) 50%) calc(100% - 16px) 52% / 6px 6px no-repeat,
-    linear-gradient(135deg, var(--cyan) 50%, transparent 50%) calc(100% - 11px) 52% / 6px 6px no-repeat;
+    linear-gradient(45deg, transparent 50%, var(--accent) 50%) calc(100% - 16px) 52% / 6px 6px no-repeat,
+    linear-gradient(135deg, var(--accent) 50%, transparent 50%) calc(100% - 11px) 52% / 6px 6px no-repeat;
   cursor: pointer;
   height: 38px;
   line-height: 1.2;
@@ -410,7 +418,7 @@ select option {
 .college-option:hover,
 .college-option:has(input:checked) {
   background: var(--accent-soft);
-  border-color: rgba(77, 255, 255, 0.34);
+  border-color: var(--accent-border);
   color: var(--text);
 }
 
@@ -425,8 +433,8 @@ select option {
 .multi-select,
 [data-filter="college"] select {
   background:
-    linear-gradient(45deg, transparent 50%, var(--green) 50%) calc(100% - 16px) 52% / 6px 6px no-repeat,
-    linear-gradient(135deg, var(--green) 50%, transparent 50%) calc(100% - 11px) 52% / 6px 6px no-repeat,
+    linear-gradient(45deg, transparent 50%, var(--accent-strong) 50%) calc(100% - 16px) 52% / 6px 6px no-repeat,
+    linear-gradient(135deg, var(--accent-strong) 50%, transparent 50%) calc(100% - 11px) 52% / 6px 6px no-repeat,
     var(--panel-muted);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -461,7 +469,7 @@ select option {
 }
 
 .course-result {
-  background: rgba(248, 251, 255, 0.045);
+  background: var(--surface-subtle);
   border: 1px solid var(--border);
   border-radius: 7px;
   color: inherit;
@@ -479,7 +487,7 @@ select option {
 
 .course-result:hover,
 .course-result:focus-visible {
-  background: rgba(77, 255, 255, 0.08);
+  background: var(--surface-hover);
   border-color: var(--border-strong);
 }
 
@@ -521,8 +529,8 @@ select option {
 
 .status-card.is-error {
   background: var(--danger-soft);
-  border-color: rgba(255, 107, 107, 0.56);
-  color: #fff4f4;
+  border-color: var(--danger-border);
+  color: var(--danger-text);
 }
 
 .path-finder {
@@ -549,7 +557,7 @@ select option {
 }
 
 .path-heading svg {
-  color: var(--green);
+  color: var(--accent-strong);
 }
 
 .path-finder label {
@@ -611,8 +619,8 @@ select option {
 
 .path-actions button[type="submit"]:hover:not(:disabled),
 .path-actions button[type="submit"]:focus-visible {
-  background: var(--green);
-  border-color: var(--green);
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
   color: var(--bg);
 }
 
@@ -627,7 +635,7 @@ select option {
 }
 
 .path-result.is-error {
-  color: #ffd0d0;
+  color: var(--danger-text);
 }
 
 .path-result.is-success {
@@ -636,7 +644,7 @@ select option {
 }
 
 .path-result.is-success > span {
-  color: var(--green);
+  color: var(--accent-strong);
   font-weight: 800;
 }
 
@@ -648,8 +656,8 @@ select option {
 }
 
 .path-chain button {
-  background: rgba(109, 255, 143, 0.1);
-  border: 1px solid rgba(109, 255, 143, 0.34);
+  background: var(--accent-strong-soft);
+  border: 1px solid var(--accent-strong-border);
   border-radius: 6px;
   color: var(--text);
   flex: 0 0 auto;
@@ -664,7 +672,7 @@ select option {
   background: var(--text);
   border: 0;
   border-radius: 6px;
-  color: #050606;
+  color: var(--bg);
   font-weight: 800;
   justify-self: start;
   min-height: 32px;
@@ -746,7 +754,7 @@ select option {
 
 .segmented-control button.is-active {
   background: var(--text);
-  color: #050606;
+  color: var(--bg);
   font-weight: 800;
 }
 
@@ -757,8 +765,8 @@ select option {
 .graph-controls select,
 .layout-mode-control select {
   background:
-    linear-gradient(45deg, transparent 50%, var(--violet) 50%) calc(100% - 16px) 52% / 6px 6px no-repeat,
-    linear-gradient(135deg, var(--violet) 50%, transparent 50%) calc(100% - 11px) 52% / 6px 6px no-repeat,
+    linear-gradient(45deg, transparent 50%, var(--accent-alt) 50%) calc(100% - 16px) 52% / 6px 6px no-repeat,
+    linear-gradient(135deg, var(--accent-alt) 50%, transparent 50%) calc(100% - 11px) 52% / 6px 6px no-repeat,
     var(--panel-muted);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -796,7 +804,7 @@ select option {
 .icon-command:focus-visible,
 .stepper button:hover:not(:disabled),
 .segmented-control button:hover {
-  background: rgba(181, 108, 255, 0.12);
+  background: var(--accent-alt-soft);
   color: var(--text);
 }
 
@@ -843,7 +851,7 @@ select option {
 }
 
 .graph-overlay {
-  background: rgba(5, 6, 6, 0.86);
+  background: var(--overlay-bg);
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text-soft);
@@ -865,14 +873,14 @@ select option {
 }
 
 .graph-overlay.is-error {
-  background: rgba(38, 6, 6, 0.92);
-  border-color: rgba(255, 107, 107, 0.62);
-  color: #fff4f4;
+  background: var(--danger-overlay);
+  border-color: var(--danger-border);
+  color: var(--danger-text);
 }
 
 .graph-legend {
   align-items: center;
-  background: rgba(7, 9, 9, 0.92);
+  background: var(--floating-panel);
   border: 1px solid var(--border);
   border-radius: 7px;
   bottom: 12px;
@@ -902,18 +910,18 @@ select option {
 }
 
 .legend-line.required {
-  border-top: 3px solid rgba(248, 251, 255, 0.46);
+  border-top: 3px solid var(--text-dim);
   opacity: 0.7;
 }
 
 .legend-line.alternative {
-  border-top: 3px solid var(--cyan);
-  box-shadow: 0 0 8px rgba(77, 255, 255, 0.6);
+  border-top: 3px solid var(--accent);
+  box-shadow: 0 0 8px var(--accent-soft);
 }
 
 .legend-node {
-  background: rgba(77, 255, 255, 0.06);
-  border: 2px dashed rgba(255, 242, 117, 0.72);
+  background: var(--accent-soft);
+  border: 2px dashed var(--accent-warm);
   border-radius: 999px;
   display: inline-block;
   height: 16px;
@@ -921,7 +929,7 @@ select option {
 }
 
 .node-hover-panel {
-  background: rgba(7, 9, 9, 0.97);
+  background: var(--floating-panel);
   border: 1px solid var(--border-strong);
   border-radius: 8px;
   box-shadow: 0 18px 38px rgba(0, 0, 0, 0.42);
@@ -954,9 +962,9 @@ select option {
 
 .hover-heading small {
   background: var(--accent-soft);
-  border: 1px solid rgba(77, 255, 255, 0.38);
+  border: 1px solid var(--accent-border);
   border-radius: 999px;
-  color: var(--cyan);
+  color: var(--accent);
   font-size: 0.68rem;
   font-weight: 800;
   line-height: 1;
@@ -972,9 +980,9 @@ select option {
 
 .hover-error {
   background: var(--danger-soft);
-  border: 1px solid rgba(255, 107, 107, 0.5);
+  border: 1px solid var(--danger-border);
   border-radius: 6px;
-  color: #fff4f4;
+  color: var(--danger-text);
   font-size: 0.78rem;
   padding: 8px;
 }
@@ -1179,7 +1187,7 @@ dd {
 }
 
 .prereq-group {
-  background: rgba(248, 251, 255, 0.04);
+  background: var(--surface-subtle);
   border: 1px solid var(--border);
   border-radius: 7px;
   display: grid;
@@ -1199,13 +1207,13 @@ dd {
 }
 
 .group-label.all {
-  background: rgba(255, 242, 117, 0.12);
-  color: #fffad0;
+  background: var(--accent-warm-soft);
+  color: var(--accent-warm-text);
 }
 
 .group-label.any {
-  background: rgba(255, 111, 216, 0.14);
-  color: #ffd7f4;
+  background: var(--accent-alt-soft);
+  color: var(--accent-alt-text);
 }
 
 .option-row {
@@ -1243,8 +1251,8 @@ dd {
 }
 
 .course-chip:disabled {
-  background: rgba(248, 251, 255, 0.035);
-  color: rgba(248, 251, 255, 0.48);
+  background: var(--surface-subtle);
+  color: var(--text-dim);
 }
 
 .sr-only {

@@ -1,4 +1,4 @@
 interface:
   display_name: "Requisite API Contracts"
-  short_description: "Work on backend API handlers, JSON contracts, and smoke checks."
-  default_prompt: "Use this skill for API endpoint, JSON model, CORS, source selection, or API smoke-test work."
+  short_description: "Maintain backend API contracts and handlers"
+  default_prompt: "Use $requisite-api-contracts to update or verify the requisite-visualization backend API contract."

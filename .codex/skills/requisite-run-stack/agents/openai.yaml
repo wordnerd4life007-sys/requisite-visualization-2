@@ -1,0 +1,4 @@
+interface:
+  display_name: "Requisite Run Stack"
+  short_description: "Run backend API and frontend locally"
+  default_prompt: "Use $requisite-run-stack to start the local requisite-visualization backend API and frontend."
