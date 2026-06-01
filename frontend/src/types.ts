@@ -1,6 +1,22 @@
 export type PrerequisiteGroupType = 'all' | 'any';
 export type GraphDirection = 'prerequisites' | 'dependents' | 'both';
 export type GraphLayoutMode = 'structured' | 'organic';
+export type StudentCourseStatus = 'completed' | 'current' | 'planned';
+export type ThemeMode = 'light' | 'dark';
+
+export interface GraphTheme {
+  completedFill: string;
+  currentFill: string;
+  edge: string;
+  groupColors: readonly string[];
+  hoverBorder: string;
+  nodeBorder: string;
+  nodeFill: string;
+  nodeText: string;
+  nodeTextOutline: string;
+  plannedFill: string;
+  rootBorder: string;
+}
 
 export interface CourseSummary {
   id: string;
@@ -82,4 +98,18 @@ export type GraphCommandAction = 'fit' | 'zoom-in' | 'zoom-out' | 'reset';
 export interface GraphCommand {
   action: GraphCommandAction;
   nonce: number;
+}
+
+export interface StudentCourseRecord {
+  courseId: string;
+  status: StudentCourseStatus;
+  term?: string;
+  grade?: string;
+  source: 'manual' | 'paste';
+}
+
+export interface StudentProfile {
+  targetProgramId: string;
+  catalogYear: string;
+  courses: StudentCourseRecord[];
 }

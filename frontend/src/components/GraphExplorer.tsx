@@ -8,47 +8,10 @@ import cytoscape, {
   type StylesheetJson,
 } from 'cytoscape';
 import { getCourse, getDependents, getPrerequisites, isAbortError } from '../api/client';
-import type { CourseDetail, CourseRelationshipResponse, GraphCommand, GraphLayoutMode, GraphNode, GraphResponse } from '../types';
+import type { CourseDetail, CourseRelationshipResponse, GraphCommand, GraphLayoutMode, GraphNode, GraphResponse, GraphTheme } from '../types';
 import { graphEdgeElementId, graphPathFocus } from '../utils/graphPathFocus';
 
 type CytoscapeLayoutOptions = Parameters<Core['layout']>[0];
-
-const graphTheme = {
-  edge: '#C7D0DD',
-  groupColors: ['#7AA2F7', '#A78BFA', '#E09CB5', '#56C2A3', '#D6AA43', '#E06C75'],
-  hoverBorder: '#7AA2F7',
-  nodeBorder: '#C7D0DD',
-  nodeFill: '#10151D',
-  nodeText: '#F3F6FA',
-  nodeTextOutline: '#080B10',
-  rootBorder: '#56C2A3',
-} as const;
-const selectedNodeGlow = {
-  'underlay-color': graphTheme.rootBorder,
-  'underlay-opacity': 0.28,
-  'underlay-padding': '10px',
-  'underlay-shape': 'ellipse',
-};
-const selectedNodeStyle = {
-  'background-color': graphTheme.nodeFill,
-  'border-color': graphTheme.rootBorder,
-  'border-opacity': 1,
-  color: graphTheme.nodeText,
-  'text-outline-color': graphTheme.nodeTextOutline,
-  'text-outline-width': '3px',
-  ...selectedNodeGlow,
-};
-const rootNodeStyle = {
-  ...selectedNodeStyle,
-  'border-style': 'solid',
-  'border-width': '5px',
-  'font-family': 'Inter, Segoe UI, Arial, sans-serif',
-  'font-size': '12px',
-  height: '90px',
-  width: '90px',
-  'z-index': 20,
-  'z-index-compare': 'manual',
-};
 
 const hoverDelayMs = 250;
 const defaultGraphHeight = 430;
@@ -129,15 +92,31 @@ interface StageSize {
 
 interface GraphExplorerProps {
   command: GraphCommand;
+  completedCourseIds: Set<string>;
+  currentCourseIds: Set<string>;
   error: string | null;
   graph: GraphResponse;
   layoutMode: GraphLayoutMode;
   loading: boolean;
   onRetry: () => void;
   onSelectCourse: (courseId: string) => void;
+  plannedCourseIds: Set<string>;
+  theme: GraphTheme;
 }
 
-function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, onSelectCourse }: GraphExplorerProps) {
+function GraphExplorer({
+  command,
+  completedCourseIds,
+  currentCourseIds,
+  error,
+  graph,
+  layoutMode,
+  loading,
+  onRetry,
+  onSelectCourse,
+  plannedCourseIds,
+  theme,
+}: GraphExplorerProps) {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -149,7 +128,7 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
   const [hoverPanel, setHoverPanel] = useState<HoverPanel | null>(null);
   const [stageSize, setStageSize] = useState<StageSize>({ height: defaultGraphHeight, width: 0 });
 
-  const groupAccents = useMemo(() => groupAccentByNode(graph), [graph]);
+  const groupAccents = useMemo(() => groupAccentByNode(graph, theme), [graph, theme]);
   const groupRanks = useMemo(() => groupRankByNode(graph), [graph]);
   const structuredLayout = useMemo(
     () => graphNodeLayout(graph, groupRanks, stageSize),
@@ -161,6 +140,9 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
       classes: [
         node.id === graph.rootCourseId ? 'is-root' : '',
         node.external ? 'is-external' : '',
+        completedCourseIds.has(node.id) ? 'is-completed' : '',
+        currentCourseIds.has(node.id) ? 'is-current' : '',
+        plannedCourseIds.has(node.id) ? 'is-planned' : '',
         groupAccents.has(node.id) ? 'has-group' : '',
         groupAccents.get(node.id)?.type === 'any' ? 'group-any' : '',
         groupAccents.get(node.id)?.type === 'all' ? 'group-all' : '',
@@ -199,7 +181,7 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
           relationship: edge.relationship,
           groupType: isPrerequisiteEdge ? edge.groupType : '',
           groupIndex: edge.groupIndex,
-          groupColor: isPrerequisiteEdge ? groupColor(edge.groupIndex) : '',
+          groupColor: isPrerequisiteEdge ? groupColor(edge.groupIndex, theme) : '',
           groupKey: isPrerequisiteEdge ? graphGroupKey(edge) : '',
           external: edge.external ?? false,
         },
@@ -207,7 +189,7 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
     });
 
     return [...nodeElements, ...edgeElements];
-  }, [graph, groupAccents, groupRanks, structuredLayout.positions]);
+  }, [completedCourseIds, currentCourseIds, graph, groupAccents, groupRanks, plannedCourseIds, structuredLayout.positions, theme]);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -245,6 +227,8 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
       return;
     }
 
+    const selectedStyle = selectedNodeStyle(theme);
+    const rootStyle = rootNodeStyle(theme);
     const cy = cytoscape({
       autoungrabify: false,
       boxSelectionEnabled: false,
@@ -257,11 +241,11 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
         {
           selector: 'node',
           style: {
-            'background-color': graphTheme.nodeFill,
-            'border-color': graphTheme.nodeBorder,
+            'background-color': theme.nodeFill,
+            'border-color': theme.nodeBorder,
             'border-opacity': 0.24,
             'border-width': '2px',
-            color: graphTheme.nodeText,
+            color: theme.nodeText,
             'font-size': '11.5px',
             'font-weight': 'bold',
             height: '76px',
@@ -270,7 +254,7 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
             shape: 'ellipse',
             'text-halign': 'center',
             'text-max-width': '68px',
-            'text-outline-color': graphTheme.nodeTextOutline,
+            'text-outline-color': theme.nodeTextOutline,
             'text-outline-width': '2px',
             'text-valign': 'center',
             'text-wrap': 'wrap',
@@ -303,22 +287,50 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
           },
         },
         {
+          selector: 'node.is-completed',
+          style: {
+            'background-color': theme.completedFill,
+            'border-color': theme.rootBorder,
+            'border-opacity': 1,
+            'border-width': '4px',
+            color: theme.nodeText,
+          },
+        },
+        {
+          selector: 'node.is-current',
+          style: {
+            'background-color': theme.currentFill,
+            'border-color': theme.groupColors[4],
+            'border-opacity': 1,
+            'border-width': '4px',
+          },
+        },
+        {
+          selector: 'node.is-planned',
+          style: {
+            'background-color': theme.plannedFill,
+            'border-color': theme.groupColors[1],
+            'border-opacity': 1,
+            'border-width': '4px',
+          },
+        },
+        {
           selector: 'node.is-root',
-          style: rootNodeStyle,
+          style: rootStyle,
         },
         {
           selector: 'node.is-external',
           style: {
-            'background-color': graphTheme.nodeFill,
-            'border-color': graphTheme.nodeBorder,
+            'background-color': theme.nodeFill,
+            'border-color': theme.nodeBorder,
             'border-opacity': 0.42,
             'border-style': 'dashed',
-            color: graphTheme.nodeText,
+            color: theme.nodeText,
           },
         },
         {
           selector: 'node.is-root.is-external',
-          style: rootNodeStyle,
+          style: rootStyle,
         },
         {
           selector: 'edge',
@@ -326,9 +338,9 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
             'arrow-scale': 1.42,
             'curve-style': 'bezier',
             'line-cap': 'round',
-            'line-color': graphTheme.edge,
+            'line-color': theme.edge,
             opacity: 0.28,
-            'target-arrow-color': graphTheme.edge,
+            'target-arrow-color': theme.edge,
             'target-arrow-fill': 'filled',
             'target-arrow-shape': 'triangle-tee',
             'target-distance-from-node': '2px',
@@ -374,10 +386,10 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
         {
           selector: 'node.is-hovered',
           style: {
-            'border-color': graphTheme.hoverBorder,
+            'border-color': theme.hoverBorder,
             'border-opacity': 1,
             'border-width': '4px',
-            'underlay-color': graphTheme.hoverBorder,
+            'underlay-color': theme.hoverBorder,
             'underlay-opacity': 0.24,
             'underlay-padding': '8px',
             'underlay-shape': 'ellipse',
@@ -386,24 +398,24 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
         {
           selector: 'node.is-neighbor',
           style: {
-            'border-color': graphTheme.nodeBorder,
+            'border-color': theme.nodeBorder,
             'border-opacity': 1,
             'border-width': '3px',
           },
         },
         {
           selector: 'node:selected',
-          style: selectedNodeStyle,
+          style: selectedStyle,
         },
         {
           selector: 'node.is-root:selected',
-          style: rootNodeStyle,
+          style: rootStyle,
         },
         {
           selector: 'edge:selected',
           style: {
-            'line-color': graphTheme.hoverBorder,
-            'target-arrow-color': graphTheme.hoverBorder,
+            'line-color': theme.hoverBorder,
+            'target-arrow-color': theme.hoverBorder,
           },
         },
       ] as unknown as StylesheetJson,
@@ -546,7 +558,7 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
       cy.destroy();
       cyRef.current = null;
     };
-  }, [elements, graph, layoutMode, onSelectCourse, structuredLayout]);
+  }, [elements, graph, layoutMode, onSelectCourse, structuredLayout, theme]);
 
   useEffect(() => {
     const cy = cyRef.current;
@@ -633,6 +645,10 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
           <i className="legend-node external" />
           External
         </span>
+        <span>
+          <i className="legend-node completed" />
+          Completed
+        </span>
       </div>
     </div>
   );
@@ -698,8 +714,43 @@ function RelationshipPreview({ label, values }: { label: string; values: string[
   );
 }
 
-function groupColor(groupIndex: number): string {
-  return graphTheme.groupColors[Math.abs(groupIndex) % graphTheme.groupColors.length];
+function selectedNodeGlow(theme: GraphTheme) {
+  return {
+    'underlay-color': theme.rootBorder,
+    'underlay-opacity': 0.28,
+    'underlay-padding': '10px',
+    'underlay-shape': 'ellipse',
+  };
+}
+
+function selectedNodeStyle(theme: GraphTheme) {
+  return {
+    'background-color': theme.nodeFill,
+    'border-color': theme.rootBorder,
+    'border-opacity': 1,
+    color: theme.nodeText,
+    'text-outline-color': theme.nodeTextOutline,
+    'text-outline-width': '3px',
+    ...selectedNodeGlow(theme),
+  };
+}
+
+function rootNodeStyle(theme: GraphTheme) {
+  return {
+    ...selectedNodeStyle(theme),
+    'border-style': 'solid',
+    'border-width': '5px',
+    'font-family': 'Inter, Segoe UI, Arial, sans-serif',
+    'font-size': '12px',
+    height: '90px',
+    width: '90px',
+    'z-index': 20,
+    'z-index-compare': 'manual',
+  };
+}
+
+function groupColor(groupIndex: number, theme: GraphTheme): string {
+  return theme.groupColors[Math.abs(groupIndex) % theme.groupColors.length];
 }
 
 function graphGroupKey(edge: GraphResponse['edges'][number]): string {
@@ -1016,7 +1067,7 @@ function requestFit(cy: Core) {
   });
 }
 
-function groupAccentByNode(graph: GraphResponse): Map<string, GraphGroupAccent> {
+function groupAccentByNode(graph: GraphResponse, theme: GraphTheme): Map<string, GraphGroupAccent> {
   const accents = new Map<string, GraphGroupAccent>();
 
   graph.edges.forEach((edge) => {
@@ -1024,7 +1075,7 @@ function groupAccentByNode(graph: GraphResponse): Map<string, GraphGroupAccent> 
       return;
     }
 
-    const accent = groupAccentForEdge(edge);
+    const accent = groupAccentForEdge(edge, theme);
     setPreferredGroupAccent(accents, edge.from, accent);
     setPreferredGroupAccent(accents, edge.to, accent);
   });
@@ -1033,9 +1084,9 @@ function groupAccentByNode(graph: GraphResponse): Map<string, GraphGroupAccent> 
   return accents;
 }
 
-function groupAccentForEdge(edge: GraphResponse['edges'][number]): GraphGroupAccent {
+function groupAccentForEdge(edge: GraphResponse['edges'][number], theme: GraphTheme): GraphGroupAccent {
   return {
-    color: groupColor(edge.groupIndex),
+    color: groupColor(edge.groupIndex, theme),
     key: graphGroupKey(edge),
     rank: edge.groupType === 'any' ? Math.abs(edge.groupIndex) : 1000 + Math.abs(edge.groupIndex),
     type: edge.groupType,

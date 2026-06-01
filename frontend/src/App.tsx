@@ -1,5 +1,5 @@
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, Filter, Route, Search } from 'lucide-react';
+import { ChevronDown, Filter, Moon, Route, Search, Sun } from 'lucide-react';
 import {
   API_BASE_URL,
   getCourse,
@@ -14,6 +14,13 @@ import CourseDetail from './components/CourseDetail';
 import CourseSearch from './components/CourseSearch';
 import ExplorerControls from './components/ExplorerControls';
 import GraphExplorer from './components/GraphExplorer';
+import AdvisorPanel from './components/AdvisorPanel';
+import {
+  courseIdsForStatus,
+  emptyStudentProfile,
+  loadStudentProfile,
+  saveStudentProfile,
+} from './utils/advisor';
 import type {
   CourseDetail as CourseDetailType,
   CourseRelationshipResponse,
@@ -24,16 +31,52 @@ import type {
   GraphLayoutMode,
   GraphNode,
   GraphResponse,
+  GraphTheme,
   LoadStatus,
   PathResponse,
+  StudentProfile,
+  ThemeMode,
 } from './types';
 
 const initialCourseId = 'CMPSC 16';
 const catalogLimit = 20000;
 const visibleCourseLimit = 200;
+const themeStorageKey = 'requisite-visualization.theme.v1';
+
+const graphThemes: Record<ThemeMode, GraphTheme> = {
+  light: {
+    completedFill: '#DCFCE7',
+    currentFill: '#FEF3C7',
+    edge: '#64748B',
+    groupColors: ['#2563EB', '#7C3AED', '#DB2777', '#059669', '#B45309', '#DC2626'],
+    hoverBorder: '#2563EB',
+    nodeBorder: '#64748B',
+    nodeFill: '#FFFFFF',
+    nodeText: '#0F172A',
+    nodeTextOutline: '#FFFFFF',
+    plannedFill: '#EDE9FE',
+    rootBorder: '#059669',
+  },
+  dark: {
+    completedFill: '#173A31',
+    currentFill: '#2F2B16',
+    edge: '#C7D0DD',
+    groupColors: ['#7AA2F7', '#A78BFA', '#E09CB5', '#56C2A3', '#D6AA43', '#E06C75'],
+    hoverBorder: '#7AA2F7',
+    nodeBorder: '#C7D0DD',
+    nodeFill: '#10151D',
+    nodeText: '#F3F6FA',
+    nodeTextOutline: '#080B10',
+    plannedFill: '#221B35',
+    rootBorder: '#56C2A3',
+  },
+};
 
 function App() {
   const graphPanelRef = useRef<HTMLElement | null>(null);
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() =>
+    typeof window === 'undefined' ? 'light' : loadThemeMode(),
+  );
   const [query, setQuery] = useState('');
   const [subject, setSubject] = useState('all');
   const [selectedColleges, setSelectedColleges] = useState<string[]>([]);
@@ -68,6 +111,9 @@ function App() {
   const [pathStatus, setPathStatus] = useState<LoadStatus>('idle');
   const [pathError, setPathError] = useState<string | null>(null);
   const [pathResponse, setPathResponse] = useState<PathResponse | null>(null);
+  const [studentProfile, setStudentProfile] = useState<StudentProfile>(() =>
+    typeof window === 'undefined' ? emptyStudentProfile : loadStudentProfile(),
+  );
 
   const filterSource = filterCatalog.length > 0 ? filterCatalog : courses;
   const courseById = useMemo(() => new Map(filterSource.map((course) => [course.id, course])), [filterSource]);
@@ -94,10 +140,23 @@ function App() {
         : emptyGraph(selectedCourseId ?? '', direction, depth),
     [courseById, depth, direction, graph, selectedColleges, selectedCourseId, subject],
   );
+  const completedCourseIds = useMemo(() => courseIdsForStatus(studentProfile, 'completed'), [studentProfile]);
+  const currentCourseIds = useMemo(() => courseIdsForStatus(studentProfile, 'current'), [studentProfile]);
+  const plannedCourseIds = useMemo(() => courseIdsForStatus(studentProfile, 'planned'), [studentProfile]);
+  const graphTheme = graphThemes[themeMode];
+  const nextThemeMode: ThemeMode = themeMode === 'light' ? 'dark' : 'light';
 
   const runGraphCommand = useCallback((action: GraphCommandAction) => {
     setGraphCommand((current) => ({ action, nonce: current.nonce + 1 }));
   }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = themeMode;
+  }, [themeMode]);
+
+  useEffect(() => {
+    saveStudentProfile(studentProfile);
+  }, [studentProfile]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -309,6 +368,20 @@ function App() {
     }
   };
 
+  const toggleThemeMode = () => {
+    setThemeMode((current) => {
+      const next: ThemeMode = current === 'light' ? 'dark' : 'light';
+
+      try {
+        window.localStorage.setItem(themeStorageKey, next);
+      } catch {
+        // Theme changes should still work for the current session if storage is unavailable.
+      }
+
+      return next;
+    });
+  };
+
   const toggleFullscreen = async () => {
     const panel = graphPanelRef.current;
 
@@ -351,9 +424,21 @@ function App() {
           <span className="eyebrow">UCSB Catalog</span>
           <h1>Course Explorer</h1>
         </div>
-        <div className="catalog-status" aria-label="Catalog status">
-          <span>{catalogStatusText(courseStatus, filterSource.length)}</span>
-          <span>{API_BASE_URL}</span>
+        <div className="top-actions">
+          <div className="catalog-status" aria-label="Catalog status">
+            <span>{catalogStatusText(courseStatus, filterSource.length)}</span>
+            <span>{API_BASE_URL}</span>
+          </div>
+          <button
+            aria-label={`Switch to ${nextThemeMode} mode`}
+            aria-pressed={themeMode === 'dark'}
+            className="theme-toggle"
+            title={`Switch to ${nextThemeMode} mode`}
+            type="button"
+            onClick={toggleThemeMode}
+          >
+            {themeMode === 'light' ? <Moon aria-hidden="true" size={18} /> : <Sun aria-hidden="true" size={18} />}
+          </button>
         </div>
       </header>
 
@@ -497,22 +582,48 @@ function App() {
           />
           <GraphExplorer
             command={graphCommand}
+            completedCourseIds={completedCourseIds}
+            currentCourseIds={currentCourseIds}
             error={graphError}
             graph={filteredGraph}
             layoutMode={layoutMode}
             loading={graphStatus === 'loading'}
             onRetry={() => setGraphReloadKey((value) => value + 1)}
             onSelectCourse={setSelectedCourseId}
+            plannedCourseIds={plannedCourseIds}
+            theme={graphTheme}
           />
         </section>
 
-        <CourseDetail
+        <section className="right-rail" aria-label="Course detail">
+          <CourseDetail
+            course={selectedCourse}
+            dependentResponse={dependentResponse}
+            error={detailError}
+            loading={detailStatus === 'loading'}
+            prerequisiteResponse={prerequisiteResponse}
+            onRetry={() => setDetailReloadKey((value) => value + 1)}
+            onSelectCourse={setSelectedCourseId}
+          />
+        </section>
+      </section>
+
+      <section className="advisor-todo-section" aria-label="TODO unofficial planning helper">
+        <div className="todo-heading">
+          <span className="todo-badge">TODO</span>
+          <div>
+            <p className="detail-kicker">Frontend follow-up</p>
+            <h2>Unofficial helper</h2>
+          </div>
+        </div>
+        {/* TODO(frontend): Keep this helper at the bottom until the advising workflow is promoted into the primary explorer. */}
+        <AdvisorPanel
           course={selectedCourse}
+          courseCatalog={filterSource}
           dependentResponse={dependentResponse}
-          error={detailError}
-          loading={detailStatus === 'loading'}
           prerequisiteResponse={prerequisiteResponse}
-          onRetry={() => setDetailReloadKey((value) => value + 1)}
+          profile={studentProfile}
+          onProfileChange={setStudentProfile}
           onSelectCourse={setSelectedCourseId}
         />
       </section>
@@ -660,6 +771,15 @@ function subjectFromId(courseId: string): string {
 
 function normalizeCourseInput(value: string): string {
   return value.trim().split(/\s+/).join(' ').toUpperCase();
+}
+
+function loadThemeMode(): ThemeMode {
+  try {
+    const storedThemeMode = window.localStorage.getItem(themeStorageKey);
+    return storedThemeMode === 'dark' || storedThemeMode === 'light' ? storedThemeMode : 'light';
+  } catch {
+    return 'light';
+  }
 }
 
 function errorMessage(error: unknown, fallback: string): string {
