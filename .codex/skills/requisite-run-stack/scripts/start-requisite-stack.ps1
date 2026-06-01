@@ -85,14 +85,20 @@ function Start-LoggedProcess {
 
     $stdout = Join-Path $LogDir "$LogPrefix.out.log"
     $stderr = Join-Path $LogDir "$LogPrefix.err.log"
-    $process = Start-Process `
-        -FilePath $FilePath `
-        -ArgumentList $Arguments `
-        -WorkingDirectory $WorkingDirectory `
-        -WindowStyle Hidden `
-        -RedirectStandardOutput $stdout `
-        -RedirectStandardError $stderr `
-        -PassThru
+    $startProcessArguments = @{
+        FilePath = $FilePath
+        WorkingDirectory = $WorkingDirectory
+        WindowStyle = "Hidden"
+        RedirectStandardOutput = $stdout
+        RedirectStandardError = $stderr
+        PassThru = $true
+    }
+
+    if ($Arguments.Count -gt 0) {
+        $startProcessArguments.ArgumentList = $Arguments
+    }
+
+    $process = Start-Process @startProcessArguments
 
     Write-Host "$LogPrefix started pid=$($process.Id)"
     Write-Host "$LogPrefix logs: $stdout ; $stderr"
