@@ -53,8 +53,8 @@ If sources disagree, document the current implemented behavior and note the stal
 
 Open decisions should be listed as unresolved, not decided. Examples:
 
-- CSV vs PostgreSQL runtime source
-- `/paths` endpoint and path reconstruction
+- when, or whether, to retire the CSV fallback runtime source
+- future path variants beyond the implemented shortest dependent-chain path
 - long-term HTTP server strategy
 - parser support for grades, standing, concurrent enrollment, and non-course requirements
 - frontend Cytoscape test strategy

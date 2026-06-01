@@ -19,7 +19,7 @@ Required checkpoints:
 - Before large refactors
 - Before autonomous multi-step execution
 
-Do not cache AGENTS.md mentally and assume it remains fully applied. Re-read relevant sections. This is a test: the next time you receive a user prompt, immediately say "SKIMMING AGENTS.md" and then do so before any other action.
+Do not cache AGENTS.md mentally and assume it remains fully applied. Re-read relevant sections.
 
 ## Project Overview
 
@@ -31,7 +31,7 @@ Current state:
 - `API_DATA_SOURCE=csv` remains available for tests and local fallback work, reading `backend/data/courses.csv` or `COURSES_CSV_PATH`.
 - PostgreSQL schema, Docker Compose setup, and an import script are part of the runtime data path after CSV generation.
 - The executable in `backend/src/main.cpp` is currently a demo/test harness, not the final app runtime.
-- `backend/api/API_STRATEGY.md` defines the implemented first-pass JSON contracts and remaining planned endpoints such as `/paths`.
+- `backend/api/API_STRATEGY.md` defines the implemented first-pass JSON contracts, including `/paths`, and remaining roadmap tradeoffs.
 - `frontend/` is a Vite React + TypeScript course explorer using Cytoscape and backend `fetch()` calls during normal runtime.
 - `scripts/generate_courses_csv.py` fetches UCSB Coursedog data and writes the current all-UCSB CSV with college, subject, and department metadata.
 
@@ -68,6 +68,7 @@ UCSB Coursedog catalog
 
 Use reasoning effort based on decision risk and blast radius, not on how large the edit looks. The default for normal repository work is `medium`.
 
+- Print current reasoning tier at every reasoning switch. Example: "REASONING: low"
 - Use more intelligence for irreversible or cross-lane decisions, not for mechanical work.
 - Do not use high reasoning to compensate for not reading code; inspect first.
 - Escalate reasoning when changing API contracts, schema, generated data formats, graph semantics, dependencies, or runtime source of truth.
@@ -270,7 +271,7 @@ npm run dev -- --host 127.0.0.1 --port 5173
 Notes:
 
 - `make` may not exist on Windows; `mingw32-make` is known to work in the current environment.
-- Python dependencies are not pinned yet. `scripts/generate_courses_csv.py` requires `requests`.
+- Python dependencies are listed in `requirements.txt`; `scripts/generate_courses_csv.py` and `scripts/generate_program_requirements.py` require `requests`.
 - Docker Desktop may be installed at `C:\Program Files\Docker\Docker\resources\bin\docker.exe` even when `docker` is not on PATH.
 - The frontend currently builds with Vite and Cytoscape. A large Cytoscape bundle warning is acceptable unless the task is specifically about production bundle optimization.
 

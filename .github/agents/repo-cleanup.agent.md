@@ -45,11 +45,13 @@ Implemented data flow:
 UCSB Coursedog catalog
   -> scripts/generate_courses_csv.py
   -> backend/data/courses.csv
-  -> in-memory C++ catalog/API
+  -> scripts/import_courses_to_postgres.py --apply
+  -> PostgreSQL
+  -> C++ API startup snapshot
   -> React/TypeScript visualization
 ```
 
-PostgreSQL schema and import tooling exist, but PostgreSQL is not required by the current running app unless the repository documentation has changed.
+PostgreSQL is the default local API runtime source after importing the generated CSV. `API_DATA_SOURCE=csv` remains available for tests and local fallback work.
 
 Use these lanes when ranking or assigning cleanup tasks:
 
@@ -107,8 +109,8 @@ Use this audit format:
 
 Document and defer open decisions instead of silently resolving them. Examples:
 
-- CSV runtime source vs PostgreSQL runtime source
-- `/paths` endpoint and path reconstruction ownership
+- when, or whether, to retire the CSV fallback runtime source
+- future path variants beyond the implemented shortest dependent-chain path
 - long-term HTTP server strategy
 - external prerequisite modeling
 - blank, variable, and nonstandard credit modeling

@@ -1,5 +1,7 @@
 # Codex Coordinator Prompt: Connect Backend API To Frontend
 
+Status note: this was the coordinator prompt for the completed API/frontend integration push. Keep it as a historical or adaptation reference, not as the current repo state.
+
 Use this prompt from the repository root when you want Codex to coordinate multiple agents to connect the backend API to the React frontend and improve the graph UI.
 
 ```text
@@ -33,7 +35,7 @@ Spawn these workers in planning-only mode first. Each worker must read `AGENTS.m
    Tasks:
    - Select the smallest practical HTTP API approach for this repo and document why.
    - Implement read-only endpoints matching or intentionally updating `backend/api/API_STRATEGY.md`.
-   - Serve data from the in-memory catalog/graph layer first; PostgreSQL can remain optional unless already ready.
+   - Serve data through the shared catalog/graph interface. PostgreSQL is now the default runtime source, and CSV mode remains the fallback for tests/local diagnostics.
    - Add CORS for the Vite frontend.
    - Include endpoints for:
      - `GET /health`

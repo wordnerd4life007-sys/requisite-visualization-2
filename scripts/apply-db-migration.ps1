@@ -6,8 +6,18 @@ param(
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
-if (-not $MigrationPath) {
-    $MigrationPath = Join-Path $repoRoot "backend\db\migrations\001_initial_schema.sql"
+$migrationPaths = @()
+if ($MigrationPath) {
+    $migrationPaths += (Resolve-Path $MigrationPath).Path
+} else {
+    $migrationsDir = Join-Path $repoRoot "backend\db\migrations"
+    $migrationPaths = Get-ChildItem -Path $migrationsDir -Filter "*.sql" |
+        Sort-Object Name |
+        ForEach-Object { $_.FullName }
+}
+
+if (-not $migrationPaths) {
+    throw "No migration files found."
 }
 
 function Read-DotEnv {
@@ -58,22 +68,20 @@ $dotenv = Read-DotEnv (Join-Path $repoRoot ".env")
 $databaseUrl = Get-ConfigValue -DotEnv $dotenv -Name "DATABASE_URL"
 $password = Get-ConfigValue -DotEnv $dotenv -Name "DB_PASSWORD" -FallbackName "POSTGRES_PASSWORD"
 
-$arguments = @()
+$baseArguments = @()
 if ($databaseUrl) {
-    $arguments += $databaseUrl
+    $baseArguments += $databaseUrl
 } else {
     $hostName = Get-ConfigValue -DotEnv $dotenv -Name "DB_HOST" -FallbackName "POSTGRES_HOST"
     $port = Get-ConfigValue -DotEnv $dotenv -Name "DB_PORT" -FallbackName "POSTGRES_PORT"
     $user = Get-ConfigValue -DotEnv $dotenv -Name "DB_USER" -FallbackName "POSTGRES_USER"
     $database = Get-ConfigValue -DotEnv $dotenv -Name "DB_NAME" -FallbackName "POSTGRES_DB"
 
-    if ($hostName) { $arguments += @("--host", $hostName) }
-    if ($port) { $arguments += @("--port", $port) }
-    if ($user) { $arguments += @("--username", $user) }
-    if ($database) { $arguments += @("--dbname", $database) }
+    if ($hostName) { $baseArguments += @("--host", $hostName) }
+    if ($port) { $baseArguments += @("--port", $port) }
+    if ($user) { $baseArguments += @("--username", $user) }
+    if ($database) { $baseArguments += @("--dbname", $database) }
 }
-
-$arguments += @("-v", "ON_ERROR_STOP=1", "-f", $MigrationPath)
 
 $oldPassword = [Environment]::GetEnvironmentVariable("PGPASSWORD")
 if ($password -and -not $oldPassword) {
@@ -81,8 +89,15 @@ if ($password -and -not $oldPassword) {
 }
 
 try {
-    & $Psql @arguments
-    exit $LASTEXITCODE
+    foreach ($path in $migrationPaths) {
+        Write-Host "Applying migration: $path"
+        $arguments = $baseArguments + @("-v", "ON_ERROR_STOP=1", "-f", $path)
+        & $Psql @arguments
+        if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+        }
+    }
+    exit 0
 } finally {
     if ($password -and -not $oldPassword) {
         [Environment]::SetEnvironmentVariable("PGPASSWORD", $null)

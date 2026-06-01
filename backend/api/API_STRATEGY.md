@@ -1,6 +1,6 @@
 # API Strategy
 
-This lane owns the API and integration boundary. The first implementation should keep the JSON contracts stable before choosing or adding an HTTP server dependency.
+This lane owns the API and integration boundary. The current implementation keeps the JSON contracts transport-independent while serving them through the local C++ HTTP server.
 
 ## Runtime Approach
 
@@ -41,9 +41,9 @@ Secrets must not be logged. Redacted connection strings may show usernames, host
 
 Both sources must produce the same JSON contracts below.
 
-## Initial Endpoints
+## Implemented Endpoints
 
-The proposed first API surface is read-only:
+The current API surface is read-only:
 
 ```text
 GET /health
@@ -199,6 +199,6 @@ Error response:
 ## Handoffs
 
 - Lane 1 should provide stable in-memory queries for direct prerequisites, recursive prerequisites, dependents, graph neighborhoods, and shortest path reconstruction.
-- Lane 2 should settle external prerequisite storage before the PostgreSQL-backed adapter becomes the source for grouped prerequisite responses.
+- Lane 2 should keep PostgreSQL import behavior aligned with grouped prerequisite responses and external prerequisite flags.
 - Lane 4 should keep normal runtime on `fetch()` calls and use `frontend/src/data/mockCatalog.ts` only as a development fixture if needed.
 - Lane 5 should keep API smoke and catalog contract tests aligned with these response contracts.

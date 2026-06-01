@@ -1,0 +1,4 @@
+interface:
+  display_name: "Requisite Repo Cleanup"
+  short_description: "Purpose-led cleanup for contributors"
+  default_prompt: "Use $requisite-repo-cleanup to audit contributor-facing cleanup opportunities and guide one approved cleanup task."

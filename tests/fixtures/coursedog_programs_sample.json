@@ -1,0 +1,54 @@
+[
+  {
+    "_id": "program-cmpsc-bs",
+    "name": "Computer Science, B.S.",
+    "programGroupId": "cmpsc-bs",
+    "degreeDesignation": "Bachelor of Science",
+    "programType": "Undergraduate",
+    "college": "College of Engineering",
+    "department": "Computer Science",
+    "effectiveStartDate": "2025-06-01",
+    "effectiveEndDate": null,
+    "requisites": {
+      "allOf": [
+        {
+          "name": "Preparation for the Major",
+          "courseSets": ["set-cmpsc-prep"]
+        }
+      ]
+    },
+    "documents": [
+      {
+        "name": "Computer Science B.S. requirements",
+        "url": "https://catalog.ucsb.edu/programs/cmpsc-bs.pdf"
+      }
+    ]
+  },
+  {
+    "_id": "program-econ-ba",
+    "name": "Economics, B.A.",
+    "programGroupId": "econ-ba",
+    "degreeDesignation": "Bachelor of Arts",
+    "programType": "Undergraduate",
+    "college": "College of Letters and Science",
+    "departments": [
+      {
+        "name": "Economics"
+      }
+    ],
+    "effectiveStartDate": "2025-06-01",
+    "requirementDocument": {
+      "url": "https://catalog.ucsb.edu/programs/econ-ba.pdf"
+    }
+  },
+  {
+    "_id": "program-stats-minor",
+    "name": "Statistics Minor",
+    "programGroupId": "stats-minor",
+    "degreeDesignation": "Minor",
+    "programType": "Undergraduate",
+    "college": "College of Letters and Science",
+    "department": "Statistics and Applied Probability",
+    "effectiveStartDate": "2025-06-01"
+  }
+]

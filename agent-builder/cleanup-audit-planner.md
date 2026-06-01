@@ -91,8 +91,8 @@ Each top task must include:
 
 Document and defer decisions such as:
 
-- PostgreSQL source of truth vs CSV runtime source
-- `/paths` endpoint ownership and path reconstruction
+- when, or whether, to retire the CSV fallback runtime source
+- future path variants beyond the implemented shortest dependent-chain path
 - parser semantics for grades, standing, concurrent enrollment, and non-course requirements
 - frontend test strategy for Cytoscape interactions
 - whether local-only, deployed web app, class project, or portfolio app is the primary target

@@ -10,6 +10,7 @@
 - The C++ API server defaults to `API_DATA_SOURCE=postgres`, snapshots PostgreSQL data into memory at startup, and serves local read-only endpoints from `backend/src/api/HttpServer.cpp`.
 - `API_DATA_SOURCE=csv` remains available for tests and local fallback work.
 - `frontend/` is a Vite React + TypeScript app that uses backend `fetch()` calls during normal runtime. It does not use `frontend/src/data/mockCatalog.ts` in normal runtime.
+- The frontend includes an unofficial local-only planning assistant. Students can manually add completed/current/planned courses or paste course-history text, and the selected-course prerequisite readiness is evaluated in the browser against loaded API prerequisite groups.
 - `backend/src/main.cpp` is still a small demo executable separate from the API server.
 
 ## Architecture
@@ -31,6 +32,7 @@ More detail:
 - `docs/architecture.md` explains the current local architecture.
 - `docs/data-quality.md` records catalog and parser caveats.
 - `backend/api/API_STRATEGY.md` documents API contracts and examples.
+- `CONTRIBUTING.md` gives a compact setup, check, generated-file, and safe-first-task guide.
 
 ## Prerequisites
 
@@ -41,9 +43,29 @@ More detail:
 - Python for catalog generation and import scripts.
 - Node.js and npm for the Vite frontend.
 
-Python dependencies are not pinned yet. `scripts/generate_courses_csv.py` requires `requests` when regenerating the catalog from Coursedog.
+Install Python dependencies with:
+
+```powershell
+python -m pip install -r requirements.txt
+```
 
 ## Run Locally
+
+Install frontend dependencies:
+
+```powershell
+cd frontend
+npm install
+cd ..
+```
+
+Create a local environment file for Docker/PostgreSQL:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Edit `.env` for local PostgreSQL values before starting Docker. Do not commit `.env`.
 
 Build the backend demo and API:
 
@@ -58,7 +80,7 @@ If PostgreSQL is installed somewhere else, override `PG_ROOT`:
 mingw32-make api PG_ROOT=C:/Path/To/PostgreSQL/18
 ```
 
-Start local PostgreSQL and apply the schema. The migration command matters for existing Docker volumes because Postgres init scripts only run when the volume is first created.
+Start local PostgreSQL and apply the migrations. The migration command matters for existing Docker volumes because Postgres init scripts only run when the volume is first created.
 
 ```powershell
 docker compose up -d postgres
@@ -108,13 +130,30 @@ CSV mode reads `COURSES_CSV_PATH` when set. Otherwise it falls back to `backend/
 
 The API server loads `.env` without overriding variables already set in the shell. Do not print or commit secret values from `.env`.
 
+## Planning Assistant
+
+The planning assistant is intentionally local and unofficial:
+
+- Completed, current, and planned course entries are stored in browser `localStorage`.
+- Pasted transcript/course-history text is parsed in the browser and the raw text is not sent to the backend.
+- The assistant evaluates selected-course prerequisites only; it does not yet evaluate full major, GE, unit, GPA, transfer, or official progress-check requirements.
+- Graph nodes are visually marked when they match local completed/current/planned course records.
+
+Program/major requirement ingestion is scaffolded separately from the course prerequisite tables. The proof-of-concept script below fetches UCSB Coursedog program metadata and writes a normalized JSON snapshot:
+
+```powershell
+python .\scripts\generate_program_requirements.py --output backend\data\programs.json --catalog-year 2025-2026
+```
+
+This script preserves raw source records and requirement-document links for later parser/manual review work. Do not treat its output as official degree-progress logic.
+
 ## Useful Checks
+
+Quick checks that do not require a populated PostgreSQL database:
 
 ```powershell
 mingw32-make test-cpp
 python -m unittest discover -s tests/python
-mingw32-make test-api-smoke
-mingw32-make test-api-smoke-postgres
 python .\scripts\import_courses_to_postgres.py --dry-run
 ```
 
@@ -126,6 +165,23 @@ npm run build
 ```
 
 The Vite build currently reports a large Cytoscape chunk warning. That warning is expected until bundle splitting is addressed.
+
+Integration checks:
+
+```powershell
+mingw32-make test-api-smoke
+mingw32-make test-api-smoke-postgres
+```
+
+The PostgreSQL smoke check assumes Docker Postgres is running, migrations have been applied, and the generated catalog has been imported.
+
+Frontend browser smoke after UI changes:
+
+- Search for a course and select it.
+- Verify selected-course details, prerequisites, and dependents.
+- Render graph neighborhoods and click a graph node to select it.
+- Exercise subject/college filters, zoom, fit, reset, and fullscreen.
+- Confirm the backend-unavailable state is readable.
 
 ## API Summary
 
@@ -164,6 +220,7 @@ The import script treats `backend/data/courses.csv` as authoritative when applyi
 Database files:
 
 - `backend/db/migrations/001_initial_schema.sql`
+- `backend/db/migrations/002_program_requirements_schema.sql`
 - `backend/db/seeds/001_sample_data.sql`
 
 Local database helpers:
@@ -190,6 +247,7 @@ External prerequisite references are preserved with `external` flags instead of 
 ## Current Limitations
 
 - Parser handling still needs improvement for concurrent enrollment, minimum grades, standing, instructor consent, and non-course requirements.
+- Program requirement ingestion is a proof of concept. Full major-progress evaluation is not implemented yet.
+- The planning assistant is unofficial and local-only; it does not connect to GOLD, UCSB official student APIs, or server-side student profiles.
 - Frontend tests are still limited beyond the current build and browser smoke workflow.
 - The Cytoscape bundle has not been split for production bundle-size optimization.
-- Python dependencies are not pinned yet.

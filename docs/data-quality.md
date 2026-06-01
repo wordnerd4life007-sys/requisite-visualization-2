@@ -8,6 +8,8 @@ Course data comes from UCSB Coursedog through `scripts/generate_courses_csv.py`.
 
 The generated CSV is treated as generated data. Rewrite it only for catalog generation/import work.
 
+Program/major metadata can be explored through `scripts/generate_program_requirements.py`, which reads UCSB Coursedog program records and writes normalized JSON with raw source records preserved. This is not yet a complete major requirement parser.
+
 ## Current Catalog Facts
 
 The current generated catalog was produced for effective date `2026-05-18` and contains:
@@ -22,6 +24,7 @@ The current generated catalog was produced for effective date `2026-05-18` and c
 - 569 external prerequisite option references across 198 distinct prerequisite IDs.
 - 9 blank credit values.
 - 11 nonstandard nonblank credit values.
+- No checked-in `description` column yet. The generator, importer, PostgreSQL adapter, and API support descriptions after the CSV is explicitly regenerated and imported.
 
 These facts should be rechecked after regenerating the CSV because the upstream catalog can change.
 
@@ -78,6 +81,7 @@ Current lightweight checks:
 
 ```powershell
 python .\scripts\import_courses_to_postgres.py --dry-run
+python .\scripts\generate_program_requirements.py --input-json tests\fixtures\coursedog_programs_sample.json --output $env:TEMP\programs.json
 python -m unittest discover -s tests/python
 mingw32-make test-cpp
 ```
