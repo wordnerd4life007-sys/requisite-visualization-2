@@ -78,6 +78,7 @@ function App() {
     typeof window === 'undefined' ? 'light' : loadThemeMode(),
   );
   const [query, setQuery] = useState('');
+  const [resultsOpen, setResultsOpen] = useState(false);
   const [subject, setSubject] = useState('all');
   const [selectedColleges, setSelectedColleges] = useState<string[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(initialCourseId);
@@ -342,6 +343,19 @@ function App() {
         ? selectedColleges[0]
         : `${selectedColleges.length} colleges`;
 
+  const submitCourseSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setResultsOpen(true);
+  };
+
+  const handleQueryChange = (nextQuery: string) => {
+    setQuery(nextQuery);
+  };
+
+  const selectCourse = (courseId: string) => {
+    setSelectedCourseId(courseId);
+  };
+
   const submitPathSearch = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -459,18 +473,23 @@ function App() {
       <section className="workspace" aria-label="Course explorer workspace">
         <aside className="course-panel" aria-label="Course search and results">
           <div className="panel-toolbar">
-            <label className="search-field">
-              <Search aria-hidden="true" size={18} />
-              <span className="sr-only">Search courses</span>
-              <input
-                autoComplete="off"
-                list="course-suggestions"
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search by course, title, subject, or department"
-              />
-            </label>
+            <form className="search-stack" onSubmit={submitCourseSearch}>
+              <label className="search-field">
+                <Search aria-hidden="true" size={18} />
+                <span className="sr-only">Search courses</span>
+                <input
+                  autoComplete="off"
+                  list="course-suggestions"
+                  type="search"
+                  value={query}
+                  onChange={(event) => handleQueryChange(event.target.value)}
+                  placeholder="Search by course, title, subject, or department"
+                />
+              </label>
+              <button className="search-submit" type="submit">
+                Search
+              </button>
+            </form>
 
             <label className="subject-filter">
               <Filter aria-hidden="true" size={17} />
@@ -550,7 +569,7 @@ function App() {
               response={pathResponse}
               error={pathError}
               loading={pathStatus === 'loading'}
-              onSelectCourse={setSelectedCourseId}
+              onSelectCourse={selectCourse}
             />
           </form>
 
@@ -560,8 +579,10 @@ function App() {
             error={courseError}
             loading={courseStatus === 'loading'}
             selectedCourseId={selectedCourseId}
+            open={resultsOpen}
+            onClose={() => setResultsOpen(false)}
             onRetry={() => setCourseReloadKey((value) => value + 1)}
-            onSelectCourse={setSelectedCourseId}
+            onSelectCourse={selectCourse}
           />
 
           <datalist id="course-suggestions">
@@ -603,7 +624,7 @@ function App() {
             layoutMode={layoutMode}
             loading={graphStatus === 'loading'}
             onRetry={() => setGraphReloadKey((value) => value + 1)}
-            onSelectCourse={setSelectedCourseId}
+            onSelectCourse={selectCourse}
             plannedCourseIds={plannedCourseIds}
             theme={graphTheme}
           />
@@ -617,7 +638,7 @@ function App() {
             loading={detailStatus === 'loading'}
             prerequisiteResponse={prerequisiteResponse}
             onRetry={() => setDetailReloadKey((value) => value + 1)}
-            onSelectCourse={setSelectedCourseId}
+            onSelectCourse={selectCourse}
           />
         </section>
       </section>

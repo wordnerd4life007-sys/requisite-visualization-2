@@ -1,5 +1,4 @@
-import { useId, useState } from 'react';
-import { ChevronDown, ChevronUp, ListFilter } from 'lucide-react';
+import { Search } from 'lucide-react';
 import type { CourseSummary } from '../types';
 
 interface CourseSearchProps {
@@ -8,6 +7,8 @@ interface CourseSearchProps {
   error: string | null;
   loading: boolean;
   selectedCourseId: string | null;
+  open: boolean;
+  onClose: () => void;
   onRetry: () => void;
   onSelectCourse: (courseId: string) => void;
 }
@@ -18,12 +19,11 @@ function CourseSearch({
   error,
   loading,
   selectedCourseId,
+  open,
+  onClose,
   onRetry,
   onSelectCourse,
 }: CourseSearchProps) {
-  const [expanded, setExpanded] = useState(false);
-  const resultsPanelId = useId();
-  const ToggleIcon = expanded ? ChevronUp : ChevronDown;
   const matchLabel = totalCount === 1 ? 'match' : 'matches';
   const statusLabel = error
     ? 'Needs attention'
@@ -32,29 +32,40 @@ function CourseSearch({
       : totalCount === 0
         ? 'No matches'
         : `${totalCount} ${matchLabel}`;
+  const previewCourses = courses.slice(0, 4);
 
   return (
-    <div className={`course-results ${expanded ? 'is-expanded' : ''}`} aria-live="polite">
-      <button
-        aria-controls={resultsPanelId}
-        aria-expanded={expanded}
-        className="matches-toggle"
-        type="button"
-        onClick={() => setExpanded((current) => !current)}
-      >
-        <span className="matches-toggle-label">
-          <ListFilter aria-hidden="true" size={17} />
-          <span>Browse matches</span>
-        </span>
+    <section className={`course-results ${open ? 'is-open' : ''}`} aria-live="polite" aria-label="Course search results">
+      <div className="results-summary">
         <span className={`matches-badge ${error ? 'is-error' : ''}`}>{statusLabel}</span>
-        <ToggleIcon aria-hidden="true" className="matches-toggle-icon" size={17} />
-      </button>
+        {!open && previewCourses.length > 0 ? (
+          <div className="preview-stack" aria-label="Search preview matches">
+            {previewCourses.map((course) => (
+              <button
+                className={`preview-result ${course.id === selectedCourseId ? 'is-selected' : ''}`}
+                key={course.id}
+                type="button"
+                onClick={() => onSelectCourse(course.id)}
+              >
+                <span>{course.id}</span>
+                <small>{course.name}</small>
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
 
-      <div className="results-panel" hidden={!expanded} id={resultsPanelId}>
-        <div className="result-count">
-          <span>{totalCount}</span>
-          <span>{matchLabel}</span>
-          {courses.length < totalCount ? <span>showing {courses.length}</span> : null}
+      <div className="results-panel" hidden={!open}>
+        <div className="result-panel-heading">
+          <Search aria-hidden="true" size={16} />
+          <div className="result-count">
+            <span>{totalCount}</span>
+            <span>{matchLabel}</span>
+            {courses.length < totalCount ? <span>showing {courses.length}</span> : null}
+          </div>
+          <button type="button" onClick={onClose}>
+            Close
+          </button>
         </div>
 
         {error ? (
@@ -91,7 +102,7 @@ function CourseSearch({
           </div>
         ) : null}
       </div>
-    </div>
+    </section>
   );
 }
 
