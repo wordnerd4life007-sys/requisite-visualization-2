@@ -218,7 +218,7 @@ h1 {
   display: grid;
   gap: 14px;
   grid-template-columns: minmax(0, 2fr) minmax(310px, 1fr);
-  grid-template-rows: minmax(148px, auto) minmax(0, 1fr);
+  grid-template-rows: minmax(132px, auto) minmax(0, 1fr);
   height: calc(100vh - 102px);
   margin: 0 auto;
   max-width: 1480px;
@@ -239,8 +239,8 @@ h1 {
 .course-panel {
   display: grid;
   grid-column: 1 / -1;
-  grid-template-columns: minmax(320px, 0.9fr) minmax(300px, 0.74fr) minmax(360px, 1.16fr);
-  max-height: 190px;
+  grid-template-columns: minmax(520px, 1.16fr) minmax(300px, 0.72fr) minmax(360px, 1fr);
+  max-height: 174px;
   position: relative;
   z-index: 5;
 }
@@ -256,8 +256,9 @@ h1 {
   background: var(--panel-toolbar);
   border-right: 1px solid var(--border);
   display: grid;
-  gap: 10px;
-  padding: 12px;
+  gap: 9px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  padding: 11px 12px;
 }
 
 .search-field,
@@ -271,6 +272,15 @@ h1 {
   gap: 8px;
   min-width: 0;
   padding: 0 11px;
+}
+
+.search-field {
+  grid-column: 1 / -1;
+}
+
+.subject-filter,
+.college-filter {
+  min-width: 0;
 }
 
 .search-field input,
@@ -288,7 +298,7 @@ h1 {
 }
 
 .search-field input {
-  height: 40px;
+  height: 38px;
   line-height: 1.35;
   padding: 0;
   text-overflow: ellipsis;
@@ -313,7 +323,7 @@ select option {
 .college-filter {
   border: 0;
   display: grid;
-  gap: 7px;
+  gap: 5px;
   margin: 0;
   min-width: 0;
   padding: 0;
@@ -350,6 +360,13 @@ select option {
 
 .college-menu summary::-webkit-details-marker {
   display: none;
+}
+
+.college-menu summary span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .college-menu[open] summary,

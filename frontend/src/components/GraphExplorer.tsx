@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import cytoscape, {
   type Core,
   type EdgeSingular,
@@ -51,6 +51,7 @@ const rootNodeStyle = {
 };
 
 const hoverDelayMs = 250;
+const hoverPreviewNodeLimit = 18;
 const defaultGraphHeight = 430;
 const layoutHorizontalPadding = 64;
 const layoutVerticalPadding = 28;
@@ -70,6 +71,9 @@ interface HoverInfo {
   course: CourseDetail | null;
   dependents: CourseRelationshipResponse | null;
   error: string | null;
+  hiddenPrerequisiteCount: number;
+  hiddenPrerequisitePreviewIds: string[];
+  hiddenPrerequisiteTruncated: boolean;
   prerequisites: CourseRelationshipResponse | null;
 }
 
@@ -145,6 +149,7 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
   const hoverAbortRef = useRef<AbortController | null>(null);
   const hoverCacheRef = useRef<Map<string, HoverInfo>>(new Map());
   const hoverNodeIdRef = useRef<string | null>(null);
+  const hoverPreviewIdsRef = useRef<string[]>([]);
   const hoverTimerRef = useRef<number | null>(null);
   const [hoverPanel, setHoverPanel] = useState<HoverPanel | null>(null);
   const [stageSize, setStageSize] = useState<StageSize>({ height: defaultGraphHeight, width: 0 });
@@ -191,6 +196,7 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
           isPrerequisiteEdge ? 'has-group' : '',
           isPrerequisiteEdge && edge.groupType === 'any' ? 'group-any' : '',
           isPrerequisiteEdge && edge.groupType === 'all' ? 'group-all' : '',
+          isPrerequisiteEdge && isIncidentToCourse(edge, graph.rootCourseId) ? 'is-selected-prerequisite' : '',
         ].filter(Boolean).join(' '),
         data: {
           id,
@@ -338,24 +344,75 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
         {
           selector: 'edge.has-group',
           style: {
-            'line-color': 'data(groupColor)',
-            opacity: 0.58,
-            'target-arrow-color': 'data(groupColor)',
-            width: '2.6px',
+            opacity: 0.34,
+            width: '2.2px',
           },
         },
         {
-          selector: 'edge.group-any',
+          selector: 'edge.is-selected-prerequisite, edge.is-hover-prerequisite',
           style: {
-            opacity: 0.9,
+            'line-color': 'data(groupColor)',
+            opacity: 0.74,
+            'target-arrow-color': 'data(groupColor)',
+            width: '2.8px',
+          },
+        },
+        {
+          selector: 'edge.group-any.is-selected-prerequisite, edge.group-any.is-hover-prerequisite',
+          style: {
+            opacity: 0.94,
+            width: '3.5px',
+          },
+        },
+        {
+          selector: 'edge.group-all.is-selected-prerequisite, edge.group-all.is-hover-prerequisite',
+          style: {
+            opacity: 0.58,
+            width: '2.5px',
+          },
+        },
+        {
+          selector: 'node.is-hidden-prereq-preview',
+          style: {
+            'background-color': '#161D28',
+            'border-color': graphTheme.hoverBorder,
+            'border-opacity': 0.84,
+            'border-style': 'dashed',
+            'border-width': '3px',
+            'font-size': '10.5px',
+            height: '66px',
+            'underlay-color': graphTheme.hoverBorder,
+            'underlay-opacity': 0.12,
+            'underlay-padding': '6px',
+            width: '66px',
+            'z-index': 18,
+            'z-index-compare': 'manual',
+          },
+        },
+        {
+          selector: 'edge.is-hidden-prereq-preview',
+          style: {
+            'line-color': 'data(groupColor)',
+            opacity: 0.82,
+            'target-arrow-color': 'data(groupColor)',
+            'line-style': 'solid',
+            width: '2.9px',
+            'z-index': 17,
+            'z-index-compare': 'manual',
+          },
+        },
+        {
+          selector: 'edge.is-hidden-prereq-preview.group-any',
+          style: {
+            opacity: 0.96,
             width: '3.4px',
           },
         },
         {
-          selector: 'edge.group-all',
+          selector: 'edge.is-hidden-prereq-preview.group-all',
           style: {
-            opacity: 0.46,
-            width: '2.4px',
+            opacity: 0.68,
+            width: '2.6px',
           },
         },
         {
@@ -422,11 +479,12 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
       hoverAbortRef.current = null;
       hoverNodeIdRef.current = null;
       setHoverPanel(null);
-      clearGraphHoverState(cy);
+      removeHiddenPrerequisitePreview(cy, hoverPreviewIdsRef);
+      clearGraphHoverState(cy, graph.rootCourseId);
     };
 
     cy.on('tap', 'node', (event) => {
-      const courseId = event.target.id();
+      const courseId = String(event.target.data('previewCourseId') || event.target.id());
       const isExternal = Boolean(event.target.data('external'));
 
       if (!isExternal) {
@@ -436,12 +494,13 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
 
     cy.on('mouseover', 'node', (event) => {
       const node = event.target;
-      const courseId = node.id();
+      const courseId = String(node.data('previewCourseId') || node.id());
       const fallback = fallbackNodeFromElement(node);
       const position = panelPosition(event, stageRef.current, containerRef.current);
 
       hoverNodeIdRef.current = courseId;
       applyHoverFocus(cy, node, graph);
+      applyLocalPrerequisiteAccent(cy, graph.rootCourseId, courseId);
 
       if (hoverTimerRef.current !== null) {
         window.clearTimeout(hoverTimerRef.current);
@@ -454,7 +513,15 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
           setHoverPanel({
             courseId,
             fallback,
-            info: { course: null, dependents: null, error: null, prerequisites: null },
+            info: {
+              course: null,
+              dependents: null,
+              error: null,
+              hiddenPrerequisiteCount: 0,
+              hiddenPrerequisitePreviewIds: [],
+              hiddenPrerequisiteTruncated: false,
+              prerequisites: null,
+            },
             position,
             status: 'success',
           });
@@ -463,7 +530,11 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
 
         const cached = hoverCacheRef.current.get(courseId);
         if (cached) {
-          setHoverPanel({ courseId, fallback, info: cached, position, status: cached.error ? 'error' : 'success' });
+          const info = cached.prerequisites
+            ? previewInfo(cached, renderHiddenPrerequisitePreview(cy, node, cached.prerequisites, hoverPreviewIdsRef))
+            : cached;
+          hoverCacheRef.current.set(courseId, info);
+          setHoverPanel({ courseId, fallback, info, position, status: info.error ? 'error' : 'success' });
           return;
         }
 
@@ -478,10 +549,23 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
           getDependents(courseId, controller.signal),
         ])
           .then(([course, prerequisites, dependents]) => {
-            const info = { course, prerequisites, dependents, error: null };
-            hoverCacheRef.current.set(courseId, info);
+            const baseInfo = {
+              course,
+              prerequisites,
+              dependents,
+              error: null,
+              hiddenPrerequisiteCount: 0,
+              hiddenPrerequisitePreviewIds: [],
+              hiddenPrerequisiteTruncated: false,
+            };
+            hoverCacheRef.current.set(courseId, baseInfo);
 
             if (hoverNodeIdRef.current === courseId) {
+              const info = previewInfo(
+                baseInfo,
+                renderHiddenPrerequisitePreview(cy, node, prerequisites, hoverPreviewIdsRef),
+              );
+              hoverCacheRef.current.set(courseId, info);
               setHoverPanel({
                 courseId,
                 fallback,
@@ -500,6 +584,9 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
               course: null,
               dependents: null,
               error: loadError instanceof Error && loadError.message ? loadError.message : 'Unable to load course details.',
+              hiddenPrerequisiteCount: 0,
+              hiddenPrerequisitePreviewIds: [],
+              hiddenPrerequisiteTruncated: false,
               prerequisites: null,
             };
             hoverCacheRef.current.set(courseId, info);
@@ -518,7 +605,7 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
     });
 
     cy.on('mousemove', 'node', (event) => {
-      const courseId = event.target.id();
+      const courseId = String(event.target.data('previewCourseId') || event.target.id());
 
       if (hoverNodeIdRef.current !== courseId) {
         return;
@@ -539,6 +626,7 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
     });
 
     cyRef.current = cy;
+    applyLocalPrerequisiteAccent(cy, graph.rootCourseId);
     runGraphLayout(cy, graph, structuredLayout, layoutMode, scrollRef.current);
 
     return () => {
@@ -570,7 +658,8 @@ function GraphExplorer({ command, error, graph, layoutMode, loading, onRetry, on
       hoverAbortRef.current = null;
       hoverNodeIdRef.current = null;
       setHoverPanel(null);
-      clearGraphHoverState(cy);
+      removeHiddenPrerequisitePreview(cy, hoverPreviewIdsRef);
+      clearGraphHoverState(cy, graph.rootCourseId);
       cy.stop();
       cy.elements().unselect();
       cy.zoom(1);
@@ -645,6 +734,9 @@ function HoverInspectionPanel({ panel }: { panel: HoverPanel }) {
   const department = course?.department || panel.fallback.department || 'Not listed';
   const credits = course?.credits ?? null;
   const prerequisiteIds = panel.info?.prerequisites?.flattenedCourseIds ?? [];
+  const hiddenPreviewIds = panel.info?.hiddenPrerequisitePreviewIds ?? [];
+  const hiddenTotal = panel.info?.hiddenPrerequisiteCount ?? 0;
+  const hiddenTruncated = panel.info?.hiddenPrerequisiteTruncated ?? false;
   const dependentIds = panel.info?.dependents?.flattenedCourseIds ?? [];
 
   return (
@@ -679,20 +771,40 @@ function HoverInspectionPanel({ panel }: { panel: HoverPanel }) {
       <div className="hover-relationships">
         <RelationshipPreview label="Prerequisites" values={prerequisiteIds} />
         <RelationshipPreview label="Dependents" values={dependentIds} />
+        <RelationshipPreview
+          label="Hidden preview"
+          values={hiddenPreviewIds}
+          emptyLabel="No hidden prerequisites"
+          totalCount={hiddenTotal}
+          truncated={hiddenTruncated}
+        />
       </div>
     </div>
   );
 }
 
-function RelationshipPreview({ label, values }: { label: string; values: string[] }) {
+function RelationshipPreview({
+  label,
+  values,
+  emptyLabel = 'None listed',
+  totalCount = values.length,
+  truncated = false,
+}: {
+  emptyLabel?: string;
+  label: string;
+  totalCount?: number;
+  truncated?: boolean;
+  values: string[];
+}) {
   const visibleValues = values.slice(0, 4);
+  const hiddenCount = Math.max(0, totalCount - visibleValues.length);
 
   return (
     <div>
       <span>{label}</span>
       <p>
-        {visibleValues.length > 0 ? visibleValues.join(', ') : 'None listed'}
-        {values.length > visibleValues.length ? ` +${values.length - visibleValues.length} more` : ''}
+        {visibleValues.length > 0 ? visibleValues.join(', ') : emptyLabel}
+        {hiddenCount > 0 ? ` +${hiddenCount} more${truncated ? ' (capped)' : ''}` : ''}
       </p>
     </div>
   );
@@ -704,6 +816,158 @@ function groupColor(groupIndex: number): string {
 
 function graphGroupKey(edge: GraphResponse['edges'][number]): string {
   return `${edge.groupType}:${edge.groupIndex}`;
+}
+
+function isIncidentToCourse(edge: GraphResponse['edges'][number], courseId: string): boolean {
+  return Boolean(courseId) && (edge.from === courseId || edge.to === courseId);
+}
+
+interface HiddenPrerequisitePreviewResult {
+  previewCourseIds: string[];
+  totalMissing: number;
+  truncated: boolean;
+}
+
+function previewInfo(info: HoverInfo, preview: HiddenPrerequisitePreviewResult): HoverInfo {
+  return {
+    ...info,
+    hiddenPrerequisiteCount: preview.totalMissing,
+    hiddenPrerequisitePreviewIds: preview.previewCourseIds,
+    hiddenPrerequisiteTruncated: preview.truncated,
+  };
+}
+
+function renderHiddenPrerequisitePreview(
+  cy: Core,
+  hoveredNode: NodeSingular,
+  prerequisites: CourseRelationshipResponse,
+  previewIdsRef: MutableRefObject<string[]>,
+): HiddenPrerequisitePreviewResult {
+  removeHiddenPrerequisitePreview(cy, previewIdsRef);
+
+  const existingNodeIds = new Set(cy.nodes().map((node) => node.id()));
+  const missingOptions = uniqueMissingPrerequisiteOptions(prerequisites, existingNodeIds);
+  const previewOptions = missingOptions.slice(0, hoverPreviewNodeLimit);
+  const hoveredPosition = hoveredNode.position();
+  const previewIds: string[] = [];
+
+  previewOptions.forEach(({ courseId, external, groupIndex, groupType }, index) => {
+    const nodeId = previewNodeId(courseId);
+    const edgeId = previewEdgeId(courseId, hoveredNode.id(), groupIndex, index);
+    const position = previewNodePosition(hoveredPosition, index, previewOptions.length);
+    const groupKey = `${groupType}:${groupIndex}`;
+
+    cy.add([
+      {
+        classes: ['is-hidden-prereq-preview', external ? 'is-external' : '', groupType === 'any' ? 'group-any' : 'group-all']
+          .filter(Boolean)
+          .join(' '),
+        data: {
+          id: nodeId,
+          label: courseId,
+          name: external ? 'External prerequisite preview' : 'Hidden prerequisite preview',
+          external,
+          groupColor: groupColor(groupIndex),
+          groupKey,
+          groupRank: groupType === 'any' ? Math.abs(groupIndex) : 1000 + Math.abs(groupIndex),
+          groupType,
+          previewCourseId: courseId,
+          root: false,
+        },
+        position,
+      },
+      {
+        classes: ['is-hidden-prereq-preview', groupType === 'any' ? 'group-any' : 'group-all'].join(' '),
+        data: {
+          id: edgeId,
+          source: nodeId,
+          target: hoveredNode.id(),
+          relationship: 'prerequisite',
+          groupType,
+          groupIndex,
+          groupColor: groupColor(groupIndex),
+          groupKey,
+          external,
+        },
+      },
+    ]);
+
+    previewIds.push(nodeId, edgeId);
+  });
+
+  previewIdsRef.current = previewIds;
+
+  return {
+    previewCourseIds: previewOptions.map((option) => option.courseId),
+    totalMissing: missingOptions.length,
+    truncated: missingOptions.length > previewOptions.length,
+  };
+}
+
+function uniqueMissingPrerequisiteOptions(
+  prerequisites: CourseRelationshipResponse,
+  existingNodeIds: Set<string>,
+) {
+  const seen = new Set<string>();
+  const options: Array<{
+    courseId: string;
+    external: boolean;
+    groupIndex: number;
+    groupType: CourseRelationshipResponse['groups'][number]['type'];
+  }> = [];
+
+  prerequisites.groups.forEach((group) => {
+    group.options.forEach((option) => {
+      const courseId = option.courseId.trim();
+
+      if (!courseId || existingNodeIds.has(courseId) || seen.has(courseId)) {
+        return;
+      }
+
+      seen.add(courseId);
+      options.push({
+        courseId,
+        external: option.external,
+        groupIndex: group.groupIndex,
+        groupType: group.type,
+      });
+    });
+  });
+
+  return options;
+}
+
+function previewNodeId(courseId: string): string {
+  return `preview-node:${courseId}`;
+}
+
+function previewEdgeId(courseId: string, targetCourseId: string, groupIndex: number, index: number): string {
+  return `preview-edge:${courseId}:${targetCourseId}:${groupIndex}:${index}`;
+}
+
+function previewNodePosition(origin: { x: number; y: number }, index: number, total: number): { x: number; y: number } {
+  const columns = Math.max(1, Math.ceil(total / 6));
+  const column = Math.floor(index / 6);
+  const row = index % 6;
+  const rowsInColumn = Math.min(6, total - column * 6);
+
+  return {
+    x: origin.x - 154 - column * 104,
+    y: origin.y + (row - (rowsInColumn - 1) / 2) * 74,
+  };
+}
+
+function removeHiddenPrerequisitePreview(cy: Core, previewIdsRef: MutableRefObject<string[]>) {
+  if (previewIdsRef.current.length === 0) {
+    return;
+  }
+
+  cy.remove(collectionFromIds(cy, previewIdsRef.current));
+  previewIdsRef.current = [];
+}
+
+function collectionFromIds(cy: Core, ids: string[]) {
+  return ids.reduce((collection, id) => collection.union(cy.$id(id)), cy.collection());
 }
 
 function edgeElementId(edge: GraphResponse['edges'][number], index: number): string {
@@ -1326,8 +1590,29 @@ function applyHoverFocus(cy: Core, node: NodeSingular, graph: GraphResponse) {
   cy.edges().filter((edge) => focusedEdgeIds.has(edge.id())).addClass('is-focused');
 }
 
-function clearGraphHoverState(cy: Core) {
-  cy.elements().removeClass('is-faded is-focused is-hovered is-neighbor');
+function clearGraphHoverState(cy: Core, rootCourseId?: string) {
+  cy.elements().removeClass('is-faded is-focused is-hovered is-neighbor is-hover-prerequisite');
+
+  if (rootCourseId) {
+    applyLocalPrerequisiteAccent(cy, rootCourseId);
+  }
+}
+
+function applyLocalPrerequisiteAccent(cy: Core, rootCourseId: string, hoveredCourseId?: string) {
+  cy.edges('.has-group').removeClass('is-selected-prerequisite is-hover-prerequisite');
+
+  cy.edges('.has-group').forEach((edge) => {
+    const sourceId = edge.source().id();
+    const targetId = edge.target().id();
+
+    if (rootCourseId && (sourceId === rootCourseId || targetId === rootCourseId)) {
+      edge.addClass('is-selected-prerequisite');
+    }
+
+    if (hoveredCourseId && (sourceId === hoveredCourseId || targetId === hoveredCourseId)) {
+      edge.addClass('is-hover-prerequisite');
+    }
+  });
 }
 
 function panelPosition(
@@ -1379,8 +1664,8 @@ function fallbackNodeFromElement(node: NodeSingular): GraphNode {
     college: String(node.data('college') || ''),
     department: String(node.data('department') || ''),
     external: Boolean(node.data('external')),
-    id: node.id(),
-    label: String(node.data('label') || node.id()),
+    id: String(node.data('previewCourseId') || node.id()),
+    label: String(node.data('label') || node.data('previewCourseId') || node.id()),
     name: String(node.data('name') || ''),
     subject: String(node.data('subject') || ''),
   };
