@@ -149,27 +149,30 @@ This script preserves raw source records and requirement-document links for late
 
 ## Useful Checks
 
-Quick checks that do not require a populated PostgreSQL database:
+Run backend, Python, and API checks locally:
 
 ```powershell
 mingw32-make test-cpp
 python -m unittest discover -s tests/python
 python .\scripts\import_courses_to_postgres.py --dry-run
+mingw32-make test-api-smoke
 ```
 
 Check the frontend build:
 
 ```powershell
 cd frontend
+npm ci
 npm run build
 ```
 
+The default GitHub Actions workflow runs the same reliable CI set on Linux: C++ backend tests, Python unit tests, PostgreSQL import dry-run, the CSV-backed API smoke test, and the frontend npm build. The PostgreSQL-backed smoke test remains a local check because CI does not start a PostgreSQL service yet.
+
 The Vite build currently reports a large Cytoscape chunk warning. That warning is expected until bundle splitting is addressed.
 
-Integration checks:
+PostgreSQL integration check:
 
 ```powershell
-mingw32-make test-api-smoke
 mingw32-make test-api-smoke-postgres
 ```
 
