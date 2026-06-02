@@ -38,7 +38,7 @@ Current state:
 Current integration status:
 
 - The first backend API is implemented and the frontend normal runtime uses backend `fetch()` calls.
-- The graph UI has a dark workspace, circular course nodes, click-to-inspect details, zoom/navigation controls, fullscreen behavior, and solid bright colors for alternative prerequisite groups.
+- The graph UI uses a professional light workspace by default with a dark mode option, circular course nodes, click-to-inspect details, zoom/navigation controls, fullscreen behavior, and solid bright colors for alternative prerequisite groups.
 - Catalog generation now targets the current UCSB catalog by default and preserves college, department, and subject metadata for frontend filters.
 
 Target data flow:
@@ -323,7 +323,7 @@ If a task crosses lanes, identify the handoff point and use each relevant skill 
 
 Use these lanes to split work across agents. Each lane owns a distinct set of files and should avoid overlapping edits with other lanes.
 
-For the next full integration push, use `docs/prompts/connect-api-frontend-agents.md`. It is a coordinator prompt designed to spawn planning-only workers first, then implement backend API connection, all-UCSB catalog expansion, frontend fetch integration, dark graph UI improvements, testing, and documentation in a controlled order.
+For the next full integration push, use `docs/prompts/connect-api-frontend-agents.md`. It is a coordinator prompt designed to spawn planning-only workers first, then implement backend API connection, all-UCSB catalog expansion, frontend fetch integration, professional light graph UI improvements with a dark mode option, testing, and documentation in a controlled order.
 
 ## Coordination Rules For Multiple Agents
 

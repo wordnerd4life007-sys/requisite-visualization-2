@@ -64,7 +64,7 @@ Implemented UI behavior:
 - Prerequisite and dependent sections from backend relationship endpoints.
 - Graph neighborhoods from `/graph`.
 - Multi-select college filters and subject filtering.
-- Dark high-contrast workspace.
+- Professional light workspace by default, with a dark mode option.
 - Circular course nodes.
 - Clickable graph nodes that refetch and display course details.
 - Fit, zoom in, zoom out, reset, and fullscreen controls.

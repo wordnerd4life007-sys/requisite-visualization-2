@@ -159,23 +159,27 @@ function App() {
   }, [studentProfile]);
 
   useEffect(() => {
-    const controller = new AbortController();
+    let active = true;
 
-    listCourses({ limit: catalogLimit }, controller.signal)
+    listCourses({ limit: catalogLimit })
       .then((loadedCourses) => {
-        setFilterCatalog(loadedCourses);
+        if (active) {
+          setFilterCatalog(loadedCourses);
+        }
       })
       .catch((error: unknown) => {
-        if (!isAbortError(error)) {
+        if (active && !isAbortError(error)) {
           setFilterCatalog([]);
         }
       });
 
-    return () => controller.abort();
+    return () => {
+      active = false;
+    };
   }, [courseReloadKey]);
 
   useEffect(() => {
-    const controller = new AbortController();
+    let active = true;
     const timeoutId = window.setTimeout(() => {
       const normalizedQuery = query.trim();
 
@@ -189,9 +193,12 @@ function App() {
           subject: subject === 'all' ? undefined : subject,
           colleges: selectedColleges,
         },
-        controller.signal,
       )
         .then((loadedCourses) => {
+          if (!active) {
+            return;
+          }
+
           setCourses(loadedCourses);
           setCourseStatus('success');
 
@@ -200,7 +207,7 @@ function App() {
           }
         })
         .catch((error: unknown) => {
-          if (isAbortError(error)) {
+          if (!active || isAbortError(error)) {
             return;
           }
 
@@ -211,8 +218,8 @@ function App() {
     }, 180);
 
     return () => {
+      active = false;
       window.clearTimeout(timeoutId);
-      controller.abort();
     };
   }, [courseReloadKey, query, selectedColleges, subject]);
 
@@ -225,27 +232,28 @@ function App() {
       return;
     }
 
-    const controller = new AbortController();
+    let active = true;
 
     setDetailStatus('loading');
     setDetailError(null);
-    setSelectedCourse(null);
-    setPrerequisiteResponse(null);
-    setDependentResponse(null);
 
     Promise.all([
-      getCourse(selectedCourseId, controller.signal),
-      getPrerequisites(selectedCourseId, controller.signal),
-      getDependents(selectedCourseId, controller.signal),
+      getCourse(selectedCourseId),
+      getPrerequisites(selectedCourseId),
+      getDependents(selectedCourseId),
     ])
       .then(([course, prerequisites, dependents]) => {
+        if (!active) {
+          return;
+        }
+
         setSelectedCourse(course);
         setPrerequisiteResponse(prerequisites);
         setDependentResponse(dependents);
         setDetailStatus('success');
       })
       .catch((error: unknown) => {
-        if (isAbortError(error)) {
+        if (!active || isAbortError(error)) {
           return;
         }
 
@@ -256,7 +264,9 @@ function App() {
         setDetailError(errorMessage(error, 'Unable to load course details.'));
       });
 
-    return () => controller.abort();
+    return () => {
+      active = false;
+    };
   }, [detailReloadKey, selectedCourseId]);
 
   useEffect(() => {
@@ -266,11 +276,10 @@ function App() {
       return;
     }
 
-    const controller = new AbortController();
+    let active = true;
 
     setGraphStatus('loading');
     setGraphError(null);
-    setGraph(null);
 
     getGraph(
       {
@@ -280,14 +289,17 @@ function App() {
         subject: subject === 'all' ? undefined : subject,
         colleges: selectedColleges,
       },
-      controller.signal,
     )
       .then((graphResponse) => {
+        if (!active) {
+          return;
+        }
+
         setGraph(graphResponse);
         setGraphStatus('success');
       })
       .catch((error: unknown) => {
-        if (isAbortError(error)) {
+        if (!active || isAbortError(error)) {
           return;
         }
 
@@ -296,7 +308,9 @@ function App() {
         setGraphError(errorMessage(error, 'Unable to load graph data.'));
       });
 
-    return () => controller.abort();
+    return () => {
+      active = false;
+    };
   }, [depth, direction, graphReloadKey, selectedColleges, selectedCourseId, subject]);
 
   useEffect(() => {
@@ -616,7 +630,7 @@ function App() {
             <h2>Unofficial helper</h2>
           </div>
         </div>
-        {/* TODO(frontend): Keep this helper at the bottom until the advising workflow is promoted into the primary explorer. */}
+        {/* TODO(frontend): Keep this helper below the explorer until the advising workflow is promoted into the primary UI. */}
         <AdvisorPanel
           course={selectedCourse}
           courseCatalog={filterSource}

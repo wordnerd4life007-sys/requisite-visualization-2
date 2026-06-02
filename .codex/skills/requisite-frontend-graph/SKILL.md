@@ -34,7 +34,7 @@ Users must be able to select more than one college and render a subset rather th
 
 Do not build a marketing landing page. The first screen should be the usable course explorer.
 
-Keep styling quiet and utilitarian. Use black or near-black page and graph backgrounds with readable text, controls, focus states, and edge colors.
+Keep styling quiet and utilitarian. Use a professional light workspace by default with a dark mode option, readable text, controls, focus states, and edge colors.
 
 Course nodes should be circular, not rounded rectangles.
 

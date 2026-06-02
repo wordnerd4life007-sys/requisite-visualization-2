@@ -18,7 +18,7 @@ Before spawning agents:
 - Follow the intelligence policy in `AGENTS.md`: use more reasoning for irreversible or cross-lane decisions, inspect code before escalating, and de-escalate after contracts and migration paths are stable.
 
 Goal:
-Completely connect the backend API to the frontend. The web app must stop depending on `frontend/src/data/mockCatalog.ts` at runtime and should use backend `fetch()` calls for course search, course detail, prerequisites, dependents, and graph neighborhoods. The frontend should become a polished dark graph explorer with a black background, circular course nodes, click-to-inspect course details, clear zoom/navigation controls, working fullscreen behavior, multi-select college filters, and bright solid group colors for alternative prerequisite groups.
+Completely connect the backend API to the frontend. The web app must stop depending on `frontend/src/data/mockCatalog.ts` at runtime and should use backend `fetch()` calls for course search, course detail, prerequisites, dependents, and graph neighborhoods. The frontend should become a polished professional graph explorer with a light default workspace, dark mode option, circular course nodes, click-to-inspect course details, clear zoom/navigation controls, working fullscreen behavior, multi-select college filters, and bright solid group colors for alternative prerequisite groups.
 
 Spawn these workers in planning-only mode first. Each worker must read `AGENTS.md`, state its assigned reasoning tier, risk level, files it expects to touch, whether it needs escalation before editing, and a small implementation plan. Use the reasoning tiers below when spawning workers or splitting follow-up implementation:
 
@@ -77,7 +77,7 @@ Spawn these workers in planning-only mode first. Each worker must read `AGENTS.m
    - Replace runtime use of `mockCatalog.ts` with an API client using `fetch()`.
    - Keep a small development fallback or fixture only if the backend is unavailable, and label it clearly in code, not as the normal UI state.
    - Add loading, error, and empty states that do not block graph navigation.
-   - Make the app visually dark with a black background and high contrast.
+   - Make the app visually professional and light by default, with a high-contrast dark mode option.
    - Render course nodes as circles.
    - Clicking a course circle must select it and show detail information. Fetch fresh detail if needed.
    - Improve Cytoscape zoom and graph navigation with fit, zoom in, zoom out, reset, and usable wheel/touch behavior.

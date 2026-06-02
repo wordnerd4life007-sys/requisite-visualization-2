@@ -15,7 +15,7 @@ type CytoscapeLayoutOptions = Parameters<Core['layout']>[0];
 
 const hoverDelayMs = 250;
 const hoverPreviewNodeLimit = 18;
-const defaultGraphHeight = 430;
+const defaultGraphHeight = 380;
 const layoutHorizontalPadding = 64;
 const layoutVerticalPadding = 28;
 const layoutNodeDiameter = 76;
@@ -1294,7 +1294,8 @@ function requestStructuredViewport(
     const rootPosition = graphLayout.positions.get(graph.rootCourseId);
     const rootX = rootPosition?.x ?? graphLayout.rootX;
     const maxScrollLeft = Math.max(0, scrollElement.scrollWidth - scrollElement.clientWidth);
-    const nextScrollLeft = Math.min(Math.max(0, rootX - scrollElement.clientWidth * 0.32), maxScrollLeft);
+    const rootViewportRatio = scrollElement.clientWidth <= 560 ? 0.45 : 0.32;
+    const nextScrollLeft = Math.min(Math.max(0, rootX - scrollElement.clientWidth * rootViewportRatio), maxScrollLeft);
     scrollElement.scrollLeft = nextScrollLeft;
   };
 

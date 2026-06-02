@@ -295,8 +295,7 @@ h1 {
   display: grid;
   gap: 14px;
   grid-template-columns: minmax(0, 2fr) minmax(310px, 1fr);
-  grid-template-rows: minmax(132px, auto) minmax(0, 1fr);
-  height: calc(100vh - 102px);
+  grid-template-rows: auto auto;
   margin: 0 auto;
   max-width: 1480px;
   min-height: 0;
@@ -316,8 +315,7 @@ h1 {
 .course-panel {
   display: grid;
   grid-column: 1 / -1;
-  grid-template-columns: minmax(520px, 1.16fr) minmax(300px, 0.72fr) minmax(360px, 1fr);
-  max-height: 174px;
+  grid-template-columns: minmax(420px, 1.08fr) minmax(300px, 0.82fr) minmax(340px, 1fr);
   position: relative;
   z-index: 5;
 }
@@ -331,7 +329,7 @@ h1 {
 
 .right-rail {
   display: grid;
-  gap: 18px;
+  gap: 14px;
   min-height: 0;
   overflow: visible;
 }
@@ -550,13 +548,12 @@ select option {
 }
 
 .course-results {
-  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  grid-column: 1 / -1;
   min-height: 0;
   overflow: hidden;
-  padding: 14px 16px 16px;
+  padding: 16px;
 }
 
 .matches-toggle {
@@ -860,7 +857,7 @@ select option {
 
 .graph-panel {
   display: grid;
-  grid-template-rows: auto minmax(600px, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   position: relative;
   z-index: 1;
 }
@@ -999,14 +996,15 @@ select option {
 
 .graph-stage {
   background: var(--graph-bg);
-  min-height: 0;
+  height: clamp(560px, calc(100vh - 300px), 760px);
+  min-height: 560px;
   overflow: hidden;
   position: relative;
 }
 
 .graph-scroll {
   height: 100%;
-  min-height: 600px;
+  min-height: 0;
   overflow-x: auto;
   overflow-y: hidden;
 }
@@ -1014,7 +1012,7 @@ select option {
 .graph-canvas {
   background: var(--graph-bg);
   height: 100%;
-  min-height: 600px;
+  min-height: 0;
   touch-action: none;
   width: 100%;
 }
@@ -1131,6 +1129,7 @@ select option {
   gap: 14px;
   margin: 24px auto 0;
   max-width: 1480px;
+  min-width: 0;
 }
 
 .todo-heading {
@@ -1746,6 +1745,8 @@ dd {
   }
 
   .course-results {
+    border-left: 0;
+    border-top: 1px solid var(--border);
     grid-column: 1 / -1;
   }
 
@@ -1821,12 +1822,17 @@ dd {
   }
 
   .graph-panel {
-    grid-template-rows: auto minmax(520px, auto);
+    grid-template-rows: auto minmax(0, auto);
+  }
+
+  .graph-stage {
+    height: 440px;
+    min-height: 440px;
   }
 
   .graph-scroll,
   .graph-canvas {
-    min-height: 520px;
+    min-height: 0;
   }
 
   .graph-panel.is-fullscreen,
@@ -1908,11 +1914,12 @@ dd {
   }
 
   .graph-stage {
-    min-height: 440px;
+    height: 380px;
+    min-height: 380px;
   }
 
   .graph-scroll {
-    min-height: 440px;
+    min-height: 0;
   }
 
   .graph-legend {
