@@ -293,7 +293,7 @@ Important files:
 - `scripts/import_courses_to_postgres.py`: dry-run and SQL-output capable CSV import script.
 - `frontend/`: Vite React + TypeScript explorer with Cytoscape graph visualization and backend API fetches.
 - `frontend/src/data/mockCatalog.ts`: development fixture only; normal runtime should not import it.
-- `docs/prompts/connect-api-frontend-agents.md`: reusable coordinator prompt for the API/frontend/catalog integration push.
+- `docs/prompts/connect-api-frontend-agents.md`: historical/adaptation reference for the completed API/frontend/catalog integration push.
 
 Known project facts from the planning pass:
 
@@ -308,7 +308,15 @@ Known project facts from the planning pass:
 
 ## Repo-Local Skills
 
-Lane-specific procedures are installed as repo-local skills under `.codex/skills/`. After the persistent `AGENTS.md` skim, open the matching skill before editing in that lane.
+Use `AGENTS.md` as the routing source of truth for stable project rules. Use
+repo-local skills for reusable workflows and detailed lane procedures.
+
+Role-based coordination skills are installed under `.agents/skills/`:
+
+- Use `.agents/skills/taskforce-orchestrator/SKILL.md` only when the user explicitly asks for multi-agent, delegated, parallel, or role-based work.
+- Use `.agents/skills/scout/SKILL.md`, `.agents/skills/architect/SKILL.md`, `.agents/skills/implementer/SKILL.md`, `.agents/skills/verifier/SKILL.md`, `.agents/skills/reviewer/SKILL.md`, and `.agents/skills/integrator/SKILL.md` for generic role responsibilities and output formats.
+
+Lane-specific procedures are installed under `.codex/skills/`. After the persistent `AGENTS.md` skim, open the matching skill before editing in that lane.
 
 - Lane 1, Backend Graph And Catalog: `.codex/skills/requisite-backend-graph/SKILL.md`
 - Lane 2, Database And Import Pipeline: `.codex/skills/requisite-catalog-import/SKILL.md`
@@ -316,18 +324,19 @@ Lane-specific procedures are installed as repo-local skills under `.codex/skills
 - Lane 4, Frontend Visualization: `.codex/skills/requisite-frontend-graph/SKILL.md`
 - Lane 5, Testing And Dev Experience: `.codex/skills/requisite-test-devex/SKILL.md`
 - Lane 6, Documentation And Product Decisions: `.codex/skills/requisite-docs-sync/SKILL.md`
+- Local Stack Runner: `.codex/skills/requisite-run-stack/SKILL.md`
+- Repo Cleanup: `.codex/skills/requisite-repo-cleanup/SKILL.md`
 
-If a task crosses lanes, identify the handoff point and use each relevant skill in dependency order. Keep universal safety, git, rate-limit, and coordination rules in this file; keep detailed lane workflows in the skills.
+If a task crosses lanes, identify the handoff point and use each relevant skill in dependency order. Keep universal safety, git, rate-limit, and routing rules in this file; keep role workflows in `.agents/skills/` and detailed lane workflows in `.codex/skills/`.
 
-## Parallel Work Lanes
+## Multi-Agent And Parallel Work
 
-Use these lanes to split work across agents. Each lane owns a distinct set of files and should avoid overlapping edits with other lanes.
+For role-based multi-agent work, use `$taskforce-orchestrator`. Do not restate generic Scout/Architect/Implementer/Verifier/Reviewer/Integrator responsibilities here; those live in `.agents/skills/`.
 
-For the next full integration push, use `docs/prompts/connect-api-frontend-agents.md`. It is a coordinator prompt designed to spawn planning-only workers first, then implement backend API connection, all-UCSB catalog expansion, frontend fetch integration, professional light graph UI improvements with a dark mode option, testing, and documentation in a controlled order.
+When assigning parallel work, split by the lane skills above and avoid overlapping write scopes. `docs/prompts/connect-api-frontend-agents.md` is a historical/adaptation reference for similar large integration work, not a current required workflow.
 
-## Coordination Rules For Multiple Agents
+## Cross-Lane Coordination Rules
 
-- Start by choosing one lane and stating the files you expect to touch.
 - If a task crosses lanes, identify the handoff point and make the smallest shared contract first.
 - Do not let two agents edit the same file at the same time unless one is explicitly integrating.
 - Backend graph work should not block on API/frontend decisions; keep a clean in-memory interface.
