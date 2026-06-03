@@ -317,7 +317,7 @@ h1 {
     "tools path"
     "results results";
   grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
-  overflow: hidden;
+  overflow: visible;
   position: relative;
   z-index: 30;
 }
@@ -594,7 +594,9 @@ select option {
   min-height: 0;
   overflow: hidden;
   padding: var(--panel-padding);
+  position: relative;
   width: 100%;
+  z-index: 1;
 }
 
 .results-summary {
