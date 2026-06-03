@@ -192,6 +192,7 @@ select:focus-visible {
 .app-shell {
   background: var(--bg);
   min-height: 100vh;
+  overflow-x: hidden;
   padding: var(--page-gutter);
 }
 
@@ -1092,6 +1093,7 @@ select option {
 .graph-stage {
   background: var(--graph-bg);
   height: clamp(560px, calc(100vh - 340px), 760px);
+  max-width: 100%;
   min-height: 560px;
   overflow: hidden;
   position: relative;
@@ -1099,6 +1101,7 @@ select option {
 
 .graph-scroll {
   height: 100%;
+  max-width: 100%;
   min-height: 0;
   overflow: hidden;
 }
