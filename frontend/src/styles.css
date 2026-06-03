@@ -44,6 +44,10 @@
   --shadow-popover: 0 18px 42px rgba(15, 23, 42, 0.16);
   --shadow-panel: 0 18px 38px rgba(15, 23, 42, 0.18);
   --shadow-tooltip: 0 14px 30px rgba(15, 23, 42, 0.16);
+  --page-gutter: clamp(32px, 4vw, 48px);
+  --panel-padding: 20px;
+  --block-padding: 14px;
+  --control-x-padding: 14px;
 }
 
 :root[data-theme='dark'] {
@@ -188,15 +192,15 @@ select:focus-visible {
 .app-shell {
   background: var(--bg);
   min-height: 100vh;
-  padding: 24px;
+  padding: var(--page-gutter);
 }
 
 .top-bar {
   align-items: end;
   display: flex;
-  gap: 24px;
+  gap: 32px;
   justify-content: space-between;
-  margin: 0 auto 20px;
+  margin: 0 auto 28px;
   max-width: 1480px;
   min-width: 0;
 }
@@ -247,7 +251,7 @@ h1 {
   line-height: 1;
   max-width: 420px;
   overflow: hidden;
-  padding: 8px 10px;
+  padding: 10px 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -284,7 +288,7 @@ h1 {
 .workspace {
   align-items: start;
   display: grid;
-  gap: 14px;
+  gap: 22px;
   grid-template-columns: minmax(0, 2fr) minmax(310px, 1fr);
   grid-template-rows: auto auto;
   margin: 0 auto;
@@ -328,7 +332,7 @@ h1 {
 
 .right-rail {
   display: grid;
-  gap: 14px;
+  gap: 22px;
   min-height: 0;
   overflow: visible;
 }
@@ -341,11 +345,11 @@ h1 {
   background: var(--panel-toolbar);
   border-right: 1px solid var(--border);
   display: grid;
-  gap: 9px;
+  gap: 14px;
   grid-area: tools;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   overflow: visible;
-  padding: 14px;
+  padding: var(--panel-padding);
   position: relative;
   z-index: 35;
 }
@@ -353,7 +357,7 @@ h1 {
 .search-stack {
   align-items: start;
   display: grid;
-  gap: 8px;
+  gap: 12px;
   grid-column: 1 / -1;
   grid-template-columns: minmax(0, 1fr) auto;
 }
@@ -366,9 +370,9 @@ h1 {
   border-radius: 6px;
   color: var(--text-muted);
   display: flex;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
-  padding: 0 11px;
+  padding: 0 var(--control-x-padding);
 }
 
 .search-field {
@@ -409,7 +413,7 @@ h1 {
   color: white;
   font-weight: 800;
   height: 44px;
-  padding: 0 14px;
+  padding: 0 18px;
 }
 
 .search-submit:hover,
@@ -437,7 +441,7 @@ select option {
 .college-filter {
   border: 0;
   display: grid;
-  gap: 5px;
+  gap: 7px;
   margin: 0;
   min-width: 0;
   padding: 0;
@@ -470,11 +474,11 @@ select option {
   cursor: pointer;
   display: flex;
   font-weight: 700;
-  gap: 8px;
+  gap: 10px;
   justify-content: space-between;
   list-style: none;
   min-height: 42px;
-  padding: 0 11px;
+  padding: 0 var(--control-x-padding);
 }
 
 .college-menu summary::-webkit-details-marker {
@@ -503,12 +507,12 @@ select option {
   border-radius: 7px;
   box-shadow: var(--shadow-popover);
   display: grid;
-  gap: 4px;
+  gap: 6px;
   left: 0;
   margin-top: 6px;
   max-height: min(320px, 48vh);
   overflow: auto;
-  padding: 6px;
+  padding: 8px;
   position: absolute;
   right: 0;
   scrollbar-color: var(--scroll-thumb) var(--scroll-track);
@@ -540,9 +544,9 @@ select option {
   display: flex;
   font-size: 0.82rem;
   font-weight: 700;
-  gap: 8px;
+  gap: 10px;
   min-height: 34px;
-  padding: 6px 8px;
+  padding: 8px 10px;
   text-align: left;
 }
 
@@ -578,7 +582,7 @@ select option {
   color: var(--text);
   min-height: 38px;
   min-width: min(100%, 220px);
-  padding: 0 34px 0 10px;
+  padding: 0 38px 0 var(--control-x-padding);
 }
 
 .course-results {
@@ -589,14 +593,14 @@ select option {
   grid-area: results;
   min-height: 0;
   overflow: hidden;
-  padding: 12px 14px 14px;
+  padding: var(--panel-padding);
   width: 100%;
 }
 
 .results-summary {
   align-items: start;
   display: flex;
-  gap: 10px;
+  gap: 14px;
   min-height: 0;
   min-width: 0;
 }
@@ -612,7 +616,7 @@ select option {
   flex: 0 0 auto;
   line-height: 1;
   margin-top: 2px;
-  padding: 7px 9px;
+  padding: 8px 11px;
   white-space: nowrap;
 }
 
@@ -625,11 +629,11 @@ select option {
 .preview-stack {
   display: flex;
   flex: 1 1 auto;
-  gap: 6px;
+  gap: 10px;
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  padding-bottom: 2px;
+  padding-bottom: 4px;
 }
 
 .preview-result {
@@ -639,9 +643,9 @@ select option {
   color: var(--text);
   display: grid;
   flex: 0 0 min(220px, 42vw);
-  gap: 2px;
+  gap: 4px;
   min-width: 0;
-  padding: 7px 8px;
+  padding: 10px 12px;
   text-align: left;
 }
 
@@ -672,7 +676,7 @@ select option {
 
 .results-panel {
   display: grid;
-  gap: 12px;
+  gap: 16px;
   min-height: 0;
 }
 
@@ -688,7 +692,7 @@ select option {
   align-items: center;
   color: var(--text-muted);
   display: grid;
-  gap: 8px;
+  gap: 10px;
   grid-template-columns: auto minmax(0, 1fr) auto;
   min-height: 30px;
 }
@@ -704,7 +708,7 @@ select option {
   color: var(--text-muted);
   font-size: 0.74rem;
   font-weight: 800;
-  padding: 5px 8px;
+  padding: 7px 10px;
 }
 
 .result-panel-heading > button:hover,
@@ -718,18 +722,18 @@ select option {
   display: flex;
   flex-wrap: wrap;
   font-size: 0.82rem;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
 }
 
 .result-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: 8px;
+  gap: 12px;
   max-height: min(330px, 42vh);
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 2px 4px 4px 2px;
+  padding: 4px 6px 6px 4px;
 }
 
 .course-result {
@@ -738,10 +742,10 @@ select option {
   border-radius: 7px;
   color: inherit;
   display: grid;
-  gap: 3px;
+  gap: 5px;
   min-width: 0;
   min-height: 76px;
-  padding: 8px 9px;
+  padding: 12px 14px;
   text-align: left;
   transition:
     border-color 0.15s ease,
@@ -786,10 +790,10 @@ select option {
   border-radius: 7px;
   color: var(--text-soft);
   display: grid;
-  gap: 9px;
+  gap: 12px;
   line-height: 1.35;
-  margin: 8px 12px;
-  padding: 11px;
+  margin: 12px 16px;
+  padding: var(--block-padding);
 }
 
 .status-card.is-error {
@@ -801,12 +805,12 @@ select option {
 .path-finder {
   background: var(--panel-toolbar);
   display: grid;
-  gap: 12px;
+  gap: 16px;
   grid-area: path;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   grid-template-rows: auto auto auto;
   min-width: 0;
-  padding: 14px;
+  padding: var(--panel-padding);
 }
 
 .path-heading {
@@ -815,7 +819,7 @@ select option {
   display: flex;
   font-size: 0.72rem;
   font-weight: 800;
-  gap: 7px;
+  gap: 9px;
   grid-column: 1 / -1;
   letter-spacing: 0;
   text-transform: uppercase;
@@ -827,7 +831,7 @@ select option {
 
 .path-finder label {
   display: grid;
-  gap: 5px;
+  gap: 7px;
   min-width: 0;
 }
 
@@ -846,7 +850,7 @@ select option {
   min-height: 40px;
   min-width: 0;
   outline: 0;
-  padding: 0 10px;
+  padding: 0 var(--control-x-padding);
   text-transform: uppercase;
   width: 100%;
 }
@@ -854,7 +858,7 @@ select option {
 .path-actions {
   align-items: center;
   display: flex;
-  gap: 7px;
+  gap: 10px;
   grid-column: 1 / -1;
   min-width: 0;
 }
@@ -867,7 +871,7 @@ select option {
   font-size: 0.78rem;
   font-weight: 800;
   min-height: 36px;
-  padding: 0 10px;
+  padding: 0 14px;
 }
 
 .path-actions button[type="submit"] {
@@ -905,7 +909,7 @@ select option {
 
 .path-result.is-success {
   display: grid;
-  gap: 6px;
+  gap: 8px;
 }
 
 .path-result.is-success > span {
@@ -915,9 +919,9 @@ select option {
 
 .path-chain {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   overflow-x: auto;
-  padding-bottom: 2px;
+  padding-bottom: 4px;
 }
 
 .path-chain button {
@@ -929,7 +933,7 @@ select option {
   font-size: 0.76rem;
   font-weight: 800;
   min-height: 28px;
-  padding: 0 8px;
+  padding: 0 10px;
 }
 
 .status-card button,
@@ -941,7 +945,7 @@ select option {
   font-weight: 800;
   justify-self: start;
   min-height: 32px;
-  padding: 0 12px;
+  padding: 0 16px;
 }
 
 .graph-panel {
@@ -970,13 +974,13 @@ select option {
   border-bottom: 1px solid var(--border);
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  padding: 16px;
+  gap: 18px;
+  padding: var(--panel-padding);
 }
 
 .control-cluster {
   display: grid;
-  gap: 5px;
+  gap: 7px;
   min-width: 0;
 }
 
@@ -1006,10 +1010,10 @@ select option {
 }
 
 .segmented-control button {
-  gap: 6px;
+  gap: 8px;
   border-right: 1px solid var(--border);
   min-width: 86px;
-  padding: 0 11px;
+  padding: 0 14px;
   white-space: nowrap;
 }
 
@@ -1038,7 +1042,7 @@ select option {
   color: var(--text);
   min-height: 38px;
   min-width: 126px;
-  padding: 0 34px 0 10px;
+  padding: 0 38px 0 var(--control-x-padding);
 }
 
 .stepper button,
@@ -1077,15 +1081,15 @@ select option {
   color: var(--text-muted);
   display: flex;
   font-size: 0.82rem;
-  gap: 8px;
+  gap: 10px;
   margin-left: auto;
-  padding: 0 10px;
+  padding: 0 14px;
   white-space: nowrap;
 }
 
 .graph-stage {
   background: var(--graph-bg);
-  height: clamp(560px, calc(100vh - 300px), 760px);
+  height: clamp(560px, calc(100vh - 340px), 760px);
   min-height: 560px;
   overflow: hidden;
   position: relative;
@@ -1121,11 +1125,11 @@ select option {
   border-radius: 8px;
   color: var(--text-soft);
   display: grid;
-  gap: 9px;
+  gap: 12px;
   left: 50%;
   line-height: 1.35;
-  max-width: min(360px, calc(100% - 32px));
-  padding: 14px;
+  max-width: min(380px, calc(100% - 40px));
+  padding: var(--panel-padding);
   position: absolute;
   text-align: center;
   top: 50%;
@@ -1148,13 +1152,13 @@ select option {
   background: var(--floating-panel);
   border: 1px solid var(--border);
   border-radius: 7px;
-  bottom: 12px;
+  bottom: 20px;
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  left: 12px;
-  max-width: calc(100% - 24px);
-  padding: 8px 10px;
+  gap: 12px;
+  left: 20px;
+  max-width: calc(100% - 40px);
+  padding: 10px 12px;
   position: absolute;
   z-index: 3;
 }
@@ -1205,17 +1209,17 @@ select option {
   border-radius: 8px;
   color: var(--text);
   display: grid;
-  gap: 14px;
+  gap: 18px;
   max-height: none;
   min-height: 0;
   overflow: visible;
-  padding: 16px;
+  padding: var(--panel-padding);
 }
 
 .advisor-todo-section {
   display: grid;
-  gap: 14px;
-  margin: 24px auto 0;
+  gap: 18px;
+  margin: 32px auto 0;
   max-width: 1480px;
   min-width: 0;
 }
@@ -1223,7 +1227,7 @@ select option {
 .todo-heading {
   align-items: center;
   display: flex;
-  gap: 12px;
+  gap: 14px;
   min-width: 0;
 }
 
@@ -1242,13 +1246,13 @@ select option {
   font-size: 0.72rem;
   font-weight: 900;
   line-height: 1;
-  padding: 8px 10px;
+  padding: 10px 12px;
 }
 
 .advisor-heading {
   align-items: center;
   display: flex;
-  gap: 10px;
+  gap: 12px;
 }
 
 .advisor-heading svg {
@@ -1275,8 +1279,8 @@ select option {
   border: 1px solid var(--border);
   border-radius: 7px;
   display: grid;
-  gap: 9px;
-  padding: 10px;
+  gap: 12px;
+  padding: var(--block-padding);
 }
 
 .advisor-status-row,
@@ -1284,7 +1288,7 @@ select option {
 .advisor-import-actions {
   align-items: center;
   display: flex;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -1325,7 +1329,7 @@ select option {
 .advisor-chip-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .advisor-chip-list button,
@@ -1337,19 +1341,19 @@ select option {
   font-size: 0.78rem;
   font-weight: 800;
   min-height: 28px;
-  padding: 0 8px;
+  padding: 0 10px;
 }
 
 .advisor-add-form {
   display: grid;
-  gap: 8px;
+  gap: 12px;
   grid-template-columns: minmax(0, 1fr) 110px auto;
 }
 
 .advisor-add-form label,
 .advisor-import label {
   display: grid;
-  gap: 5px;
+  gap: 7px;
   min-width: 0;
 }
 
@@ -1360,7 +1364,7 @@ select option {
   display: inline-flex;
   font-size: 0.68rem;
   font-weight: 800;
-  gap: 6px;
+  gap: 8px;
   text-transform: uppercase;
 }
 
@@ -1379,12 +1383,12 @@ select option {
 .advisor-add-form input,
 .advisor-add-form select {
   height: 36px;
-  padding: 0 9px;
+  padding: 0 var(--control-x-padding);
 }
 
 .advisor-import textarea {
   min-height: 74px;
-  padding: 9px;
+  padding: var(--block-padding);
   resize: vertical;
 }
 
@@ -1402,7 +1406,7 @@ select option {
   font-weight: 800;
   justify-content: center;
   min-height: 34px;
-  padding: 0 10px;
+  padding: 0 14px;
 }
 
 .advisor-import-actions {
@@ -1424,13 +1428,13 @@ select option {
 
 .advisor-records {
   display: grid;
-  gap: 7px;
+  gap: 10px;
 }
 
 .advisor-record {
   align-items: center;
   display: grid;
-  gap: 6px;
+  gap: 8px;
   grid-template-columns: minmax(0, 1fr) auto auto auto;
 }
 
@@ -1440,7 +1444,7 @@ select option {
   font-size: 0.66rem;
   font-weight: 850;
   line-height: 1;
-  padding: 6px 7px;
+  padding: 7px 9px;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -1472,10 +1476,10 @@ select option {
   box-shadow: var(--shadow-panel);
   color: var(--text-soft);
   display: grid;
-  gap: 9px;
+  gap: 12px;
   line-height: 1.35;
-  max-width: min(320px, calc(100% - 24px));
-  padding: 12px;
+  max-width: min(340px, calc(100% - 32px));
+  padding: var(--block-padding);
   pointer-events: none;
   position: absolute;
   width: 320px;
@@ -1485,7 +1489,7 @@ select option {
 .hover-heading {
   align-items: center;
   display: flex;
-  gap: 8px;
+  gap: 10px;
   justify-content: space-between;
   min-width: 0;
 }
@@ -1505,7 +1509,7 @@ select option {
   font-size: 0.68rem;
   font-weight: 800;
   line-height: 1;
-  padding: 5px 7px;
+  padding: 6px 8px;
   text-transform: uppercase;
 }
 
@@ -1521,11 +1525,11 @@ select option {
   border-radius: 6px;
   color: var(--danger-text);
   font-size: 0.78rem;
-  padding: 8px;
+  padding: 10px;
 }
 
 .hover-meta {
-  gap: 8px;
+  gap: 10px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
@@ -1540,7 +1544,7 @@ select option {
 
 .hover-relationships {
   display: grid;
-  gap: 7px;
+  gap: 10px;
 }
 
 .hover-relationships > div {
@@ -1548,8 +1552,8 @@ select option {
   border: 1px solid var(--border);
   border-radius: 6px;
   display: grid;
-  gap: 3px;
-  padding: 8px;
+  gap: 5px;
+  padding: 10px;
 }
 
 .hover-relationships span {
@@ -1566,15 +1570,15 @@ select option {
 }
 
 .detail-panel {
-  gap: 14px;
+  gap: 18px;
   overflow: visible;
-  padding: 16px;
+  padding: var(--panel-padding);
 }
 
 .detail-heading {
   align-items: center;
   display: flex;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
 }
 
@@ -1593,8 +1597,8 @@ select option {
 .detail-summary {
   border-bottom: 1px solid var(--border);
   display: grid;
-  gap: 12px;
-  padding-bottom: 14px;
+  gap: 16px;
+  padding-bottom: 18px;
 }
 
 .detail-summary h3 {
@@ -1606,7 +1610,7 @@ select option {
 
 dl {
   display: grid;
-  gap: 10px;
+  gap: 14px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin: 0;
 }
@@ -1627,14 +1631,14 @@ dd {
 
 .relationship-section {
   display: grid;
-  gap: 9px;
+  gap: 12px;
 }
 
 .section-title {
   align-items: center;
   color: var(--text);
   display: flex;
-  gap: 8px;
+  gap: 10px;
   position: relative;
 }
 
@@ -1684,9 +1688,9 @@ dd {
   font-size: 0.78rem;
   font-weight: 500;
   line-height: 1.35;
-  max-width: min(280px, calc(100vw - 48px));
+  max-width: min(300px, calc(100vw - 56px));
   opacity: 0;
-  padding: 9px 10px;
+  padding: 12px;
   pointer-events: none;
   position: absolute;
   left: 0;
@@ -1715,12 +1719,12 @@ dd {
   color: var(--text-muted);
   font-size: 0.86rem;
   line-height: 1.35;
-  padding: 10px;
+  padding: var(--block-padding);
 }
 
 .group-stack {
   display: grid;
-  gap: 8px;
+  gap: 12px;
 }
 
 .prereq-group {
@@ -1728,8 +1732,8 @@ dd {
   border: 1px solid var(--border);
   border-radius: 7px;
   display: grid;
-  gap: 8px;
-  padding: 10px;
+  gap: 12px;
+  padding: var(--block-padding);
 }
 
 .group-label {
@@ -1739,7 +1743,7 @@ dd {
   font-weight: 800;
   justify-self: start;
   line-height: 1;
-  padding: 6px 8px;
+  padding: 7px 10px;
   white-space: nowrap;
 }
 
@@ -1756,7 +1760,7 @@ dd {
 .option-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px;
+  gap: 10px;
 }
 
 .course-chip {
@@ -1769,10 +1773,10 @@ dd {
   flex-wrap: wrap;
   font-size: 0.82rem;
   font-weight: 700;
-  gap: 5px;
+  gap: 7px;
   max-width: 100%;
   min-height: 30px;
-  padding: 5px 8px;
+  padding: 6px 10px;
   white-space: normal;
 }
 
@@ -1855,8 +1859,15 @@ dd {
 }
 
 @media (max-width: 820px) {
+  :root {
+    --page-gutter: 20px;
+    --panel-padding: 16px;
+    --block-padding: 12px;
+    --control-x-padding: 12px;
+  }
+
   .app-shell {
-    padding: 14px;
+    padding: var(--page-gutter);
   }
 
   .top-bar {
@@ -1903,7 +1914,7 @@ dd {
 
   .course-results {
     max-height: none;
-    padding: 12px;
+    padding: var(--panel-padding);
   }
 
   .results-summary {
@@ -1948,6 +1959,12 @@ dd {
 }
 
 @media (max-width: 560px) {
+  :root {
+    --page-gutter: 16px;
+    --panel-padding: 14px;
+    --block-padding: 12px;
+  }
+
   .panel-toolbar {
     grid-template-columns: 1fr;
   }
