@@ -41,6 +41,8 @@ import type {
 const initialCourseId = 'CMPSC 16';
 const catalogLimit = 20000;
 const visibleCourseLimit = 200;
+const pathSuggestionDepth = 6;
+const pathSuggestionLimit = 80;
 const themeStorageKey = 'requisite-visualization.theme.v1';
 
 const graphThemes: Record<ThemeMode, GraphTheme> = {
@@ -112,6 +114,12 @@ function App() {
   const [pathStatus, setPathStatus] = useState<LoadStatus>('idle');
   const [pathError, setPathError] = useState<string | null>(null);
   const [pathResponse, setPathResponse] = useState<PathResponse | null>(null);
+  const [pathFromSuggestionIds, setPathFromSuggestionIds] = useState<Set<string> | null>(null);
+  const [pathToSuggestionIds, setPathToSuggestionIds] = useState<Set<string> | null>(null);
+  const [pathFromSuggestionStatus, setPathFromSuggestionStatus] = useState<LoadStatus>('idle');
+  const [pathToSuggestionStatus, setPathToSuggestionStatus] = useState<LoadStatus>('idle');
+  const [pathFromSuggestionError, setPathFromSuggestionError] = useState<string | null>(null);
+  const [pathToSuggestionError, setPathToSuggestionError] = useState<string | null>(null);
   const [studentProfile, setStudentProfile] = useState<StudentProfile>(() =>
     typeof window === 'undefined' ? emptyStudentProfile : loadStudentProfile(),
   );
@@ -133,6 +141,34 @@ function App() {
   );
   const displayedCourses = useMemo(() => visibleCourses.slice(0, visibleCourseLimit), [visibleCourses]);
   const courseSuggestions = useMemo(() => visibleCourses.slice(0, 80), [visibleCourses]);
+  const normalizedPathFrom = useMemo(() => normalizeCourseInput(pathFrom), [pathFrom]);
+  const normalizedPathTo = useMemo(() => normalizeCourseInput(pathTo), [pathTo]);
+  const selectedPathFromId = normalizedPathFrom && courseById.has(normalizedPathFrom) ? normalizedPathFrom : null;
+  const selectedPathToId = normalizedPathTo && courseById.has(normalizedPathTo) ? normalizedPathTo : null;
+  const pathFromSuggestions = useMemo(
+    () => pathFromSuggestionIds ? coursesFromIds(pathFromSuggestionIds, courseById, pathSuggestionLimit) : courseSuggestions,
+    [courseById, courseSuggestions, pathFromSuggestionIds],
+  );
+  const pathToSuggestions = useMemo(
+    () => pathToSuggestionIds ? coursesFromIds(pathToSuggestionIds, courseById, pathSuggestionLimit) : courseSuggestions,
+    [courseById, courseSuggestions, pathToSuggestionIds],
+  );
+  const pathFromHint = pathSuggestionHint({
+    candidateCount: pathFromSuggestions.length,
+    error: pathFromSuggestionError,
+    selectedEndpointId: selectedPathToId,
+    emptyText: selectedPathToId ? `No prerequisite courses can reach ${selectedPathToId}.` : '',
+    loadingText: selectedPathToId ? `Loading valid starts for ${selectedPathToId}...` : '',
+    status: pathFromSuggestionStatus,
+  });
+  const pathToHint = pathSuggestionHint({
+    candidateCount: pathToSuggestions.length,
+    error: pathToSuggestionError,
+    selectedEndpointId: selectedPathFromId,
+    emptyText: selectedPathFromId ? `No dependent courses reachable from ${selectedPathFromId}.` : '',
+    loadingText: selectedPathFromId ? `Loading reachable courses from ${selectedPathFromId}...` : '',
+    status: pathToSuggestionStatus,
+  });
 
   const filteredGraph = useMemo(
     () =>
@@ -313,6 +349,100 @@ function App() {
       active = false;
     };
   }, [depth, direction, graphReloadKey, selectedColleges, selectedCourseId, subject]);
+
+  useEffect(() => {
+    if (!selectedPathFromId) {
+      setPathToSuggestionIds(null);
+      setPathToSuggestionStatus('idle');
+      setPathToSuggestionError(null);
+      return;
+    }
+
+    let active = true;
+    const controller = new AbortController();
+
+    setPathToSuggestionIds(new Set());
+    setPathToSuggestionStatus('loading');
+    setPathToSuggestionError(null);
+
+    getGraph(
+      {
+        course: selectedPathFromId,
+        direction: 'dependents',
+        depth: pathSuggestionDepth,
+      },
+      controller.signal,
+    )
+      .then((graphResponse) => {
+        if (!active) {
+          return;
+        }
+
+        setPathToSuggestionIds(courseIdsFromGraph(graphResponse, selectedPathFromId));
+        setPathToSuggestionStatus('success');
+      })
+      .catch((error: unknown) => {
+        if (!active || isAbortError(error)) {
+          return;
+        }
+
+        setPathToSuggestionIds(new Set());
+        setPathToSuggestionStatus('error');
+        setPathToSuggestionError(errorMessage(error, 'Unable to load reachable courses.'));
+      });
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [selectedPathFromId]);
+
+  useEffect(() => {
+    if (!selectedPathToId) {
+      setPathFromSuggestionIds(null);
+      setPathFromSuggestionStatus('idle');
+      setPathFromSuggestionError(null);
+      return;
+    }
+
+    let active = true;
+    const controller = new AbortController();
+
+    setPathFromSuggestionIds(new Set());
+    setPathFromSuggestionStatus('loading');
+    setPathFromSuggestionError(null);
+
+    getGraph(
+      {
+        course: selectedPathToId,
+        direction: 'prerequisites',
+        depth: pathSuggestionDepth,
+      },
+      controller.signal,
+    )
+      .then((graphResponse) => {
+        if (!active) {
+          return;
+        }
+
+        setPathFromSuggestionIds(courseIdsFromGraph(graphResponse, selectedPathToId));
+        setPathFromSuggestionStatus('success');
+      })
+      .catch((error: unknown) => {
+        if (!active || isAbortError(error)) {
+          return;
+        }
+
+        setPathFromSuggestionIds(new Set());
+        setPathFromSuggestionStatus('error');
+        setPathFromSuggestionError(errorMessage(error, 'Unable to load valid starting courses.'));
+      });
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [selectedPathToId]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -555,19 +685,23 @@ function App() {
               <span>From</span>
               <input
                 autoComplete="off"
-                list="course-suggestions"
+                aria-describedby={pathFromHint ? 'path-from-hint' : undefined}
+                list="path-from-suggestions"
                 value={pathFrom}
                 onChange={(event) => setPathFrom(event.target.value)}
               />
+              {pathFromHint ? <small className="path-hint" id="path-from-hint">{pathFromHint}</small> : null}
             </label>
             <label>
               <span>To</span>
               <input
                 autoComplete="off"
-                list="course-suggestions"
+                aria-describedby={pathToHint ? 'path-to-hint' : undefined}
+                list="path-to-suggestions"
                 value={pathTo}
                 onChange={(event) => setPathTo(event.target.value)}
               />
+              {pathToHint ? <small className="path-hint" id="path-to-hint">{pathToHint}</small> : null}
             </label>
             <div className="path-actions">
               <button type="button" onClick={useSelectedCourseAsPathStart}>
@@ -587,6 +721,20 @@ function App() {
 
           <datalist id="course-suggestions">
             {courseSuggestions.map((course) => (
+              <option key={course.id} value={course.id}>
+                {course.name}
+              </option>
+            ))}
+          </datalist>
+          <datalist id="path-from-suggestions">
+            {pathFromSuggestions.map((course) => (
+              <option key={course.id} value={course.id}>
+                {course.name}
+              </option>
+            ))}
+          </datalist>
+          <datalist id="path-to-suggestions">
+            {pathToSuggestions.map((course) => (
               <option key={course.id} value={course.id}>
                 {course.name}
               </option>
@@ -798,6 +946,62 @@ function emptyGraph(rootCourseId: string, direction: GraphDirection, depth: numb
 
 function uniqueSorted(values: string[]): string[] {
   return Array.from(new Set(values)).sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
+}
+
+function courseIdsFromGraph(graph: GraphResponse, rootCourseId: string): Set<string> {
+  return new Set(
+    graph.nodes
+      .filter((node) => !node.external && node.id !== rootCourseId)
+      .map((node) => node.id),
+  );
+}
+
+function coursesFromIds(
+  courseIds: Set<string>,
+  courseById: Map<string, CourseSummary>,
+  limit: number,
+): CourseSummary[] {
+  return Array.from(courseIds)
+    .map((courseId) => courseById.get(courseId))
+    .filter((course): course is CourseSummary => Boolean(course))
+    .sort((left, right) => left.id.localeCompare(right.id, undefined, { numeric: true }))
+    .slice(0, limit);
+}
+
+interface PathSuggestionHintParams {
+  candidateCount: number;
+  emptyText: string;
+  error: string | null;
+  loadingText: string;
+  selectedEndpointId: string | null;
+  status: LoadStatus;
+}
+
+function pathSuggestionHint({
+  candidateCount,
+  emptyText,
+  error,
+  loadingText,
+  selectedEndpointId,
+  status,
+}: PathSuggestionHintParams): string | null {
+  if (!selectedEndpointId) {
+    return null;
+  }
+
+  if (status === 'loading') {
+    return loadingText;
+  }
+
+  if (status === 'error') {
+    return error;
+  }
+
+  if (status === 'success' && candidateCount === 0) {
+    return emptyText;
+  }
+
+  return null;
 }
 
 function subjectFromId(courseId: string): string {
