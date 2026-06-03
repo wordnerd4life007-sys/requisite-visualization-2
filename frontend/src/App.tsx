@@ -534,6 +534,18 @@ function App() {
             </fieldset>
           </div>
 
+          <CourseSearch
+            courses={displayedCourses}
+            totalCount={visibleCourses.length}
+            error={courseError}
+            loading={courseStatus === 'loading'}
+            selectedCourseId={selectedCourseId}
+            open={resultsOpen}
+            onClose={() => setResultsOpen(false)}
+            onRetry={() => setCourseReloadKey((value) => value + 1)}
+            onSelectCourse={selectCourse}
+          />
+
           <form className="path-finder" onSubmit={submitPathSearch}>
             <div className="path-heading">
               <Route aria-hidden="true" size={17} />
@@ -572,18 +584,6 @@ function App() {
               onSelectCourse={selectCourse}
             />
           </form>
-
-          <CourseSearch
-            courses={displayedCourses}
-            totalCount={visibleCourses.length}
-            error={courseError}
-            loading={courseStatus === 'loading'}
-            selectedCourseId={selectedCourseId}
-            open={resultsOpen}
-            onClose={() => setResultsOpen(false)}
-            onRetry={() => setCourseReloadKey((value) => value + 1)}
-            onSelectCourse={selectCourse}
-          />
 
           <datalist id="course-suggestions">
             {courseSuggestions.map((course) => (
