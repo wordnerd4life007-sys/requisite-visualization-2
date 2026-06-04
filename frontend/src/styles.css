@@ -1111,6 +1111,7 @@ select option {
   max-width: 100%;
   min-height: 0;
   overflow: hidden;
+  position: relative;
 }
 
 .graph-canvas {
@@ -1119,6 +1120,46 @@ select option {
   min-height: 0;
   touch-action: none;
   width: 100%;
+}
+
+.graph-lanes {
+  height: 0;
+  left: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: absolute;
+  top: 14px;
+  z-index: 2;
+}
+
+.graph-lane-label {
+  background: var(--floating-panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  max-width: 156px;
+  padding: 6px 10px;
+  position: absolute;
+  text-transform: uppercase;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.graph-lane-label.is-root {
+  color: var(--text);
+}
+
+.graph-lane-label.is-prerequisites {
+  border-color: var(--accent-alt-soft);
+}
+
+.graph-lane-label.is-dependents {
+  border-color: var(--accent-soft);
 }
 
 .graph-panel.is-fullscreen .graph-canvas,
