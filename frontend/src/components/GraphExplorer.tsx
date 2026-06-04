@@ -89,6 +89,10 @@ interface LayoutBucket {
   startX: number;
 }
 
+interface LayoutGraph {
+  adjacentById: Map<string, Set<string>>;
+}
+
 interface StageSize {
   height: number;
   width: number;
@@ -175,6 +179,7 @@ function GraphExplorer({
 
       return {
         classes: [
+          layoutMode === 'structured' ? 'layout-structured' : 'layout-organic',
           isPrerequisiteEdge ? 'has-group' : '',
           isPrerequisiteEdge && edge.groupType === 'any' ? 'group-any' : '',
           isPrerequisiteEdge && edge.groupType === 'all' ? 'group-all' : '',
@@ -195,7 +200,7 @@ function GraphExplorer({
     });
 
     return [...nodeElements, ...edgeElements];
-  }, [completedCourseIds, currentCourseIds, graph, groupAccents, groupRanks, plannedCourseIds, structuredLayout.positions, theme]);
+  }, [completedCourseIds, currentCourseIds, graph, groupAccents, groupRanks, layoutMode, plannedCourseIds, structuredLayout.positions, theme]);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -341,16 +346,25 @@ function GraphExplorer({
         {
           selector: 'edge',
           style: {
-            'arrow-scale': 1.42,
+            'arrow-scale': 1.24,
             'curve-style': 'bezier',
             'line-cap': 'round',
             'line-color': theme.edge,
             opacity: 0.28,
             'target-arrow-color': theme.edge,
             'target-arrow-fill': 'filled',
-            'target-arrow-shape': 'triangle-tee',
+            'target-arrow-shape': 'triangle',
             'target-distance-from-node': '2px',
             width: '2.2px',
+          },
+        },
+        {
+          selector: 'edge.layout-structured',
+          style: {
+            'curve-style': 'taxi',
+            'taxi-direction': 'horizontal',
+            'taxi-turn': '50%',
+            'taxi-turn-min-distance': '28px',
           },
         },
         {
@@ -461,6 +475,20 @@ function GraphExplorer({
           },
         },
         {
+          selector: 'node.is-visible-prerequisite',
+          style: {
+            'border-color': 'data(hoverPrerequisiteColor)',
+            'border-opacity': 1,
+            'border-width': '4px',
+            'underlay-color': 'data(hoverPrerequisiteColor)',
+            'underlay-opacity': 0.22,
+            'underlay-padding': '8px',
+            'underlay-shape': 'ellipse',
+            'z-index': 16,
+            'z-index-compare': 'manual',
+          },
+        },
+        {
           selector: 'node:selected',
           style: selectedStyle,
         },
@@ -511,7 +539,7 @@ function GraphExplorer({
       const position = panelPosition(event, stageRef.current, containerRef.current);
 
       hoverNodeIdRef.current = courseId;
-      applyHoverFocus(cy, node, graph);
+      applyHoverFocus(cy, node, graph, theme);
       applyLocalPrerequisiteAccent(cy, graph.rootCourseId, courseId);
 
       if (hoverTimerRef.current !== null) {
@@ -1400,6 +1428,7 @@ function graphNodeLayout(
   const viewportWidth = Math.max(0, stageSize.width || 0);
   const maxRows = maxRowsForHeight(canvasHeight);
   const placements = nodePlacements(graph, groupRanks);
+  const layoutGraph = layoutGraphFor(graph, placements);
   const positions = new Map<string, { x: number; y: number }>();
   const bucketPlacements = new Map<string, NodePlacement[]>();
 
@@ -1416,7 +1445,7 @@ function graphNodeLayout(
     bucketPlacements.set(key, bucket);
   });
 
-  const buckets = Array.from(bucketPlacements.entries()).map<LayoutBucket>(([key, bucket]) => {
+  const buckets = reduceLayerCrossings(Array.from(bucketPlacements.entries()).map<LayoutBucket>(([key, bucket]) => {
     const [side, distance] = key.split(':').map(Number) as [-1 | 1, number];
     const placementsForBucket = [...bucket].sort(comparePlacements);
 
@@ -1427,7 +1456,7 @@ function graphNodeLayout(
       side,
       startX: 0,
     };
-  });
+  }), layoutGraph);
 
   assignBucketColumns(buckets, 1);
   assignBucketColumns(buckets, -1);
@@ -1438,7 +1467,7 @@ function graphNodeLayout(
       const row = index % maxRows;
       const rowsInColumn = Math.min(maxRows, bucket.placements.length - column * maxRows);
       const x = bucket.startX + bucket.side * column * layoutColumnSpacing;
-      const y = centeredRowY(row, rowsInColumn, canvasHeight);
+      const y = centeredRowY(row, rowsInColumn, canvasHeight, rowSpacingForRows(rowsInColumn, canvasHeight));
 
       positions.set(placement.id, { x, y });
     });
@@ -1459,8 +1488,82 @@ function assignBucketColumns(buckets: LayoutBucket[], side: -1 | 1) {
     });
 }
 
-function centeredRowY(row: number, rowsInColumn: number, canvasHeight: number): number {
-  return canvasHeight / 2 + (row - (rowsInColumn - 1) / 2) * layoutRowSpacing;
+function reduceLayerCrossings(buckets: LayoutBucket[], layoutGraph: LayoutGraph): LayoutBucket[] {
+  const bucketsByKey = new Map(buckets.map((bucket) => [bucketKey(bucket.side, bucket.distance), bucket]));
+
+  [-1, 1].forEach((sideValue) => {
+    const side = sideValue as -1 | 1;
+    const sideBuckets = buckets
+      .filter((bucket) => bucket.side === side)
+      .sort((left, right) => left.distance - right.distance);
+
+    sideBuckets.forEach((bucket) => {
+      const previous = bucketsByKey.get(bucketKey(side, bucket.distance - 1));
+      bucket.placements = orderPlacementsByAdjacentLayer(bucket.placements, previous?.placements ?? [], layoutGraph);
+    });
+
+    sideBuckets
+      .slice()
+      .reverse()
+      .forEach((bucket) => {
+        const next = bucketsByKey.get(bucketKey(side, bucket.distance + 1));
+        bucket.placements = orderPlacementsByAdjacentLayer(bucket.placements, next?.placements ?? [], layoutGraph);
+      });
+  });
+
+  return buckets;
+}
+
+function orderPlacementsByAdjacentLayer(
+  placements: NodePlacement[],
+  adjacentLayer: NodePlacement[],
+  layoutGraph: LayoutGraph,
+): NodePlacement[] {
+  if (adjacentLayer.length === 0) {
+    return placements;
+  }
+
+  const adjacentOrder = new Map(adjacentLayer.map((placement, index) => [placement.id, index]));
+
+  return [...placements].sort((left, right) => {
+    const leftScore = adjacentOrderScore(left, adjacentOrder, layoutGraph);
+    const rightScore = adjacentOrderScore(right, adjacentOrder, layoutGraph);
+
+    return leftScore - rightScore || comparePlacements(left, right);
+  });
+}
+
+function adjacentOrderScore(
+  placement: NodePlacement,
+  adjacentOrder: Map<string, number>,
+  layoutGraph: LayoutGraph,
+): number {
+  const adjacentIndexes = Array.from(layoutGraph.adjacentById.get(placement.id) ?? [])
+    .map((courseId) => adjacentOrder.get(courseId))
+    .filter((index): index is number => index !== undefined);
+
+  if (adjacentIndexes.length === 0) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  return adjacentIndexes.reduce((sum, index) => sum + index, 0) / adjacentIndexes.length;
+}
+
+function bucketKey(side: -1 | 1, distance: number): string {
+  return `${side}:${distance}`;
+}
+
+function centeredRowY(row: number, rowsInColumn: number, canvasHeight: number, rowSpacing: number): number {
+  return canvasHeight / 2 + (row - (rowsInColumn - 1) / 2) * rowSpacing;
+}
+
+function rowSpacingForRows(rowsInColumn: number, canvasHeight: number): number {
+  if (rowsInColumn <= 1) {
+    return layoutRowSpacing;
+  }
+
+  const availableHeight = Math.max(layoutNodeDiameter, canvasHeight - layoutVerticalPadding * 2 - layoutNodeDiameter);
+  return Math.max(layoutNodeDiameter + 10, Math.min(layoutRowSpacing, availableHeight / (rowsInColumn - 1)));
 }
 
 function maxRowsForHeight(canvasHeight: number): number {
@@ -1565,6 +1668,37 @@ function nodePlacements(graph: GraphResponse, groupRanks: Map<string, number>): 
   return Array.from(placements.values());
 }
 
+function layoutGraphFor(graph: GraphResponse, placements: NodePlacement[]): LayoutGraph {
+  const placementsById = new Map(placements.map((placement) => [placement.id, placement]));
+  const adjacentById = new Map<string, Set<string>>();
+
+  graph.edges.forEach((edge) => {
+    const fromPlacement = placementsById.get(edge.from);
+    const toPlacement = placementsById.get(edge.to);
+
+    if (!fromPlacement || !toPlacement || fromPlacement.side !== toPlacement.side) {
+      return;
+    }
+
+    if (Math.abs(fromPlacement.distance - toPlacement.distance) !== 1) {
+      return;
+    }
+
+    addAdjacentPlacement(adjacentById, edge.from, edge.to);
+    addAdjacentPlacement(adjacentById, edge.to, edge.from);
+  });
+
+  return {
+    adjacentById,
+  };
+}
+
+function addAdjacentPlacement(adjacentById: Map<string, Set<string>>, courseId: string, adjacentCourseId: string) {
+  const adjacent = adjacentById.get(courseId) ?? new Set<string>();
+  adjacent.add(adjacentCourseId);
+  adjacentById.set(courseId, adjacent);
+}
+
 function placementFor(
   courseId: string,
   side: -1 | 0 | 1,
@@ -1622,33 +1756,73 @@ function setLowestRank(ranks: Map<string, number>, courseId: string, rank: numbe
   }
 }
 
-function applyHoverFocus(cy: Core, node: NodeSingular, graph: GraphResponse) {
+function applyHoverFocus(cy: Core, node: NodeSingular, graph: GraphResponse, theme: GraphTheme) {
+  clearVisiblePrerequisiteNodeAccent(cy);
   cy.elements().removeClass('is-faded is-focused is-hovered is-neighbor');
 
   const focus = graphPathFocus(graph, node.id());
   const focusedNodeIds = focus.nodeIds;
   const focusedEdgeIds = focus.edgeIds;
+  const visiblePrerequisiteAccents = visiblePrerequisiteNodeAccentsFor(cy, graph, node.id(), theme);
 
   cy.elements().forEach((element) => {
     const isFocusedNode = element.isNode() && focusedNodeIds.has(element.id());
     const isFocusedEdge = element.isEdge() && focusedEdgeIds.has(element.id());
+    const isVisiblePrerequisiteNode = element.isNode() && visiblePrerequisiteAccents.has(element.id());
 
-    if (!isFocusedNode && !isFocusedEdge) {
+    if (!isFocusedNode && !isFocusedEdge && !isVisiblePrerequisiteNode) {
       element.addClass('is-faded');
     }
   });
 
   node.addClass('is-hovered');
   cy.nodes().filter((pathNode) => focusedNodeIds.has(pathNode.id()) && pathNode.id() !== node.id()).addClass('is-neighbor');
+  visiblePrerequisiteAccents.forEach((color, courseId) => {
+    const prerequisiteNode = cy.getElementById(courseId);
+
+    if (prerequisiteNode.nonempty()) {
+      prerequisiteNode.data('hoverPrerequisiteColor', color);
+      prerequisiteNode.addClass('is-visible-prerequisite');
+    }
+  });
   cy.edges().filter((edge) => focusedEdgeIds.has(edge.id())).addClass('is-focused');
 }
 
 function clearGraphHoverState(cy: Core, rootCourseId?: string) {
+  clearVisiblePrerequisiteNodeAccent(cy);
   cy.elements().removeClass('is-faded is-focused is-hovered is-neighbor is-hover-prerequisite');
 
   if (rootCourseId) {
     applyLocalPrerequisiteAccent(cy, rootCourseId);
   }
+}
+
+function clearVisiblePrerequisiteNodeAccent(cy: Core) {
+  cy.nodes('.is-visible-prerequisite').forEach((node) => {
+    node.data('hoverPrerequisiteColor', '');
+    node.removeClass('is-visible-prerequisite');
+  });
+}
+
+function visiblePrerequisiteNodeAccentsFor(
+  cy: Core,
+  graph: GraphResponse,
+  courseId: string,
+  theme: GraphTheme,
+): Map<string, string> {
+  const prerequisiteNodeAccents = new Map<string, string>();
+
+  graph.edges.forEach((edge) => {
+    if (edge.relationship !== 'prerequisite' || edge.to !== courseId) {
+      return;
+    }
+
+    if (cy.getElementById(edge.from).nonempty()) {
+      prerequisiteNodeAccents.set(edge.from, groupColor(edge.groupIndex, theme));
+    }
+  });
+
+  return prerequisiteNodeAccents;
 }
 
 function applyLocalPrerequisiteAccent(cy: Core, rootCourseId: string, hoveredCourseId?: string) {
