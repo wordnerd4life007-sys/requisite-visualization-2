@@ -22,6 +22,58 @@
 - The frontend includes an unofficial local-only planning assistant. Students can manually add completed/current/planned courses or paste course-history text, and the selected-course prerequisite readiness is evaluated in the browser against loaded API prerequisite groups.
 - `backend/src/main.cpp` is still a small demo executable separate from the API server.
 
+## Demo
+
+UCSB Catalog Course Explorer turns the catalog into an interactive prerequisite map. Search for a course, inspect the structured prerequisite chain, explore dependent courses, and use the planning assistant to check missing requirements.
+
+### Search The Catalog
+
+Find courses by subject, title, department, or course code. The explorer keeps the course metadata and graph controls visible so you can move from search to visualization without changing pages.
+
+![Course search and explorer overview](assets/screenshots/01-search-and-course-explorer.jpg)
+
+### Fast Course Lookup
+
+Autocomplete-style results make it easy to jump directly into a course and load its graph.
+
+![Autocomplete course search](assets/screenshots/02-autocomplete-search.jpg)
+
+### Visual Prerequisite Graph
+
+The graph shows prerequisite and dependent relationships as a structured course network, with controls for direction, depth, and layout.
+
+![Prerequisite graph view](assets/screenshots/03-prerequisite-graph.jpg)
+
+### Inspect Course Relationships
+
+Click or hover through nodes to inspect course details without losing the graph context. The sidebar keeps selected-course information, prerequisite groups, and dependents readable.
+
+![Course hover card and sidebar details](assets/screenshots/04-course-hover-card.jpg)
+
+### Expand The Course Network
+
+Depth controls reveal larger prerequisite/dependent chains while keeping required, alternative, external, and completed paths visually distinct.
+
+![Expanded course prerequisite network](assets/screenshots/05-expanded-course-network.jpg)
+
+### Trace Deeper Paths
+
+For larger chains, the explorer can expose downstream course paths and show how a single course connects into later requirements.
+
+![Deep prerequisite and dependent paths](assets/screenshots/06-deep-prerequisite-paths.jpg)
+
+### Dark Mode
+
+The same graph and course metadata views are available in a dark interface for longer planning sessions.
+
+![Dark mode course explorer](assets/screenshots/07-dark-mode.jpg)
+
+### Planning Assistant
+
+The planning assistant checks selected courses against progress data, highlights missing prerequisite groups, and provides a workflow for marking courses complete.
+
+![Planning assistant](assets/screenshots/08-planning-assistant.jpg)
+
 ## Architecture
 
 ```text
