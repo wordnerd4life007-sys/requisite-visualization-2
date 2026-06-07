@@ -2,6 +2,15 @@
 
 `requisite-visualization` is a local UCSB course prerequisite explorer. It loads the current generated UCSB catalog, serves a read-only C++ API, and renders a Vite React + TypeScript graph UI for searching courses, inspecting grouped prerequisites, viewing dependents, and exploring graph neighborhoods.
 
+## Technology Stack
+
+- C++17 backend with a small local HTTP server and `libpq` PostgreSQL access.
+- PostgreSQL local runtime data store, started through Docker Compose.
+- Python catalog and import scripts using dependencies from `requirements.txt`.
+- Vite + React + TypeScript frontend.
+- Cytoscape graph rendering, with supporting React UI dependencies from `frontend/package.json`.
+- PowerShell-oriented local commands on Windows; `mingw32-make` is the known working make implementation in this environment.
+
 ## What Is Implemented
 
 - `scripts/generate_courses_csv.py` fetches UCSB Coursedog data and writes `backend/data/courses.csv`.
@@ -33,6 +42,21 @@ More detail:
 - `docs/data-quality.md` records catalog and parser caveats.
 - `backend/api/API_STRATEGY.md` documents API contracts and examples.
 - `CONTRIBUTING.md` gives a compact setup, check, generated-file, and safe-first-task guide.
+
+## Project Structure
+
+```text
+backend/
+  include/        C++ graph, parser, database, and API model headers
+  src/            C++ graph, parser, API server, catalog adapters, and demo entrypoint
+  api/            API strategy and contract documentation
+  data/           Generated catalog artifacts
+  db/             PostgreSQL migrations and seed data
+docs/             Architecture, data-quality, prompts, and planning notes
+frontend/         Vite React + TypeScript course explorer
+scripts/          Catalog generation, import, migration, and local helper scripts
+tests/            C++, Python, and API smoke tests
+```
 
 ## Prerequisites
 
@@ -186,6 +210,21 @@ Frontend browser smoke after UI changes:
 - Exercise subject/college filters, zoom, fit, reset, and fullscreen.
 - Confirm the backend-unavailable state is readable.
 
+## Development Workflow
+
+- Keep changes small and scoped to one lane when possible: backend graph/catalog, database/import, API boundary, frontend visualization, testing/dev experience, or docs/product decisions.
+- Treat `backend/data/courses.csv` as generated but intentionally tracked; regenerate it only for catalog/import work.
+- Keep frontend normal runtime on backend `fetch()` calls. `frontend/src/data/mockCatalog.ts` is a development fixture, not the production data source.
+- Run the checks that match the touched lane before committing or handing off work.
+- Do not commit `.env`, generated noise, build artifacts, or unrelated local changes.
+
+## Coding Standards
+
+- Backend C++ builds with `-std=c++17 -Wall -Wextra -pedantic`; keep interfaces small and preserve grouped prerequisite semantics instead of relying only on flattened graph edges.
+- API and documentation names should match actual behavior. For example, `/paths` returns shortest dependent-chain paths, not all possible paths.
+- Data and docs must distinguish implemented behavior from roadmap work, especially for program requirements, parser caveats, and planning-assistant limitations.
+- Frontend code should preserve the backend API as the runtime source of truth and keep large graph interactions readable and responsive.
+
 ## API Summary
 
 Implemented read-only endpoints:
@@ -254,3 +293,11 @@ External prerequisite references are preserved with `external` flags instead of 
 - The planning assistant is unofficial and local-only; it does not connect to GOLD, UCSB official student APIs, or server-side student profiles.
 - Frontend tests are still limited beyond the current build and browser smoke workflow.
 - The Cytoscape bundle has not been split for production bundle-size optimization.
+
+## Contributing
+
+Start with `CONTRIBUTING.md` for setup, checks, generated-file hygiene, and safe first tasks. Prefer focused pull requests that include relevant tests or explain why a docs-only or exploratory change does not need new tests.
+
+## License
+
+No license file is currently present in this repository.

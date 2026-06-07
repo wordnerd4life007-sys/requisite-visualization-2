@@ -6,6 +6,7 @@ import cytoscape, {
   type EventObject,
   type NodeSingular,
   type StylesheetJson,
+  type StylesheetStyle,
 } from 'cytoscape';
 import { getCourse, getDependents, getPrerequisites, isAbortError } from '../api/client';
 import type { CourseDetail, CourseRelationshipResponse, GraphCommand, GraphLayoutMode, GraphNode, GraphResponse, GraphTheme } from '../types';
@@ -29,6 +30,18 @@ const organicGroupAngularStep = 2.399963229728653;
 const organicSameGroupNodeGap = 94;
 const organicCrossGroupNodeGap = 142;
 const organicCollisionPasses = 6;
+const structuredEdgeRoutingStyle = 'straight';
+const structuredEdgeRoutingStyles = {
+  straight: {
+    'curve-style': 'straight',
+  },
+  taxi: {
+    'curve-style': 'taxi',
+    'taxi-direction': 'horizontal',
+    'taxi-turn': '50%',
+    'taxi-turn-min-distance': '28px',
+  },
+} satisfies Record<string, StylesheetStyle['style']>;
 
 interface HoverInfo {
   course: CourseDetail | null;
@@ -347,7 +360,7 @@ function GraphExplorer({
           selector: 'edge',
           style: {
             'arrow-scale': 1.24,
-            'curve-style': 'bezier',
+            'curve-style': 'straight',
             'line-cap': 'round',
             'line-color': theme.edge,
             opacity: 0.28,
@@ -360,12 +373,7 @@ function GraphExplorer({
         },
         {
           selector: 'edge.layout-structured',
-          style: {
-            'curve-style': 'taxi',
-            'taxi-direction': 'horizontal',
-            'taxi-turn': '50%',
-            'taxi-turn-min-distance': '28px',
-          },
+          style: structuredEdgeRoutingStyles[structuredEdgeRoutingStyle],
         },
         {
           selector: 'edge.has-group',

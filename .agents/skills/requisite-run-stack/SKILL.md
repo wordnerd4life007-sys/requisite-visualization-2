@@ -23,20 +23,43 @@ Prefer `postgres` data source for normal runtime. Use `csv` only when Docker/Pos
 
 1. Re-read `AGENTS.md` first and follow its branch, secret, and destructive-command rules.
 2. Run `git status --short --branch` before starting services so existing worktree state is known.
-3. Use the bundled script for the normal start-to-finish path:
+3. Do a fast listener and health triage before starting anything:
+
+```powershell
+Get-NetTCPConnection -LocalPort 8080,5173,18080,15173,28080,25173 -State Listen -ErrorAction SilentlyContinue |
+  Select-Object LocalAddress,LocalPort,OwningProcess,@{Name='ProcessName';Expression={(Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue).ProcessName}}
+```
+
+Then check any candidate project stack directly:
+
+```powershell
+Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:<api-port>/health -TimeoutSec 5
+Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:<frontend-port>/ -TimeoutSec 5
+```
+
+If both endpoints are healthy and `/health` reports a `postgresql://...` source, reuse that stack and report the URLs. If the API reports `backend/data/courses.csv`, treat it as a CSV fallback stack, not the normal PostgreSQL-backed result unless the user asked for CSV.
+
+4. Use the bundled script for the normal start-to-finish path:
 
 ```powershell
 .\.agents\skills\requisite-run-stack\scripts\start-requisite-stack.ps1
 ```
 
-4. If ports are blocked, inspect the reported listener process names. Only clean up stale local dev listeners. Do not stop unrelated services just because they use the preferred port.
-5. To remove stale listeners on the preferred API/frontend ports, rerun with:
+5. If preferred ports are blocked, inspect the listener process names. Only clean up stale local dev listeners. Do not stop unrelated services such as `httpd` just because they use the preferred port.
+6. Prefer fresh alternate port pairs over cleanup when a port is owned by an unrelated service or when an existing project stack might be useful:
+
+```powershell
+.\.agents\skills\requisite-run-stack\scripts\start-requisite-stack.ps1 -ApiPort 18080 -FrontendPort 15173
+.\.agents\skills\requisite-run-stack\scripts\start-requisite-stack.ps1 -ApiPort 28080 -FrontendPort 25173
+```
+
+7. To remove stale listeners on the preferred API/frontend ports, rerun with:
 
 ```powershell
 .\.agents\skills\requisite-run-stack\scripts\start-requisite-stack.ps1 -ForcePortCleanup
 ```
 
-6. Report the final URLs and log paths. If a service fails, summarize the failing command and the relevant log path without printing `.env` contents or secret values.
+8. Report the final URLs and log paths. If a service fails, summarize the failing command and the relevant log path without printing `.env` contents or secret values.
 
 ## Script Behavior
 
@@ -51,6 +74,12 @@ The helper script:
 - Leaves the Docker volume intact. Never use `docker compose down -v` for this workflow.
 
 The script is conservative about port cleanup. Without `-ForcePortCleanup`, it reports any process listening on `8080` or `5173` and exits. With `-ForcePortCleanup`, it stops only the process bound to those ports, which is appropriate for stale `requisite-api.exe`, `node.exe`, `npm.cmd`, or Vite dev-server listeners after checking the names.
+
+## Fast Existing-Stack Outcomes
+
+- `8080` returning an EnterpriseDB or Apache-style page is not the requisite API; leave it alone and choose alternate ports.
+- `requisite-api` plus `/health` returning `source: backend/data/courses.csv` means a project CSV stack is already running. Reuse only for CSV work; for normal runtime, start another pair with PostgreSQL.
+- A healthy `/health` response with `source: postgresql://...` and a `200 OK` frontend root page is already a complete normal stack. Report it instead of rebuilding or starting duplicate processes.
 
 ## Useful Variants
 
