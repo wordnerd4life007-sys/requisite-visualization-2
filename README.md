@@ -35,7 +35,7 @@ Find courses by subject, title, department, or course code. The explorer keeps t
 
 Autocomplete-style results make it easy to jump directly into a course and load its graph.
 
-![Autocomplete course search](assets/screenshots/02-autocomplete-search.jpg)
+![Autocomplete course search](assets/screenshots/02-autocomplete-search.png)
 
 ### Visual Prerequisite Graph
 
@@ -67,9 +67,9 @@ The same graph and course metadata views are available in a dark interface for l
 
 ![Dark mode course explorer](assets/screenshots/07-dark-mode.jpg)
 
-### Planning Assistant
+### Planning Assistant (unifinished)
 
-The planning assistant checks selected courses against progress data, highlights missing prerequisite groups, and provides a workflow for marking courses complete.
+The planning assistant checks selected courses against progress data, highlights missing prerequisite groups, and provides a workflow for marking courses complete. Note that this is a WIP; the feature exists as a placeholder an llm wrapper that will understand your course history and goals, and assist in planning which courses to take when in order to graduate on time; this, along with other capabilities benefitted by access to a course prerequisite tree that allows for hollistic knowledge of UCSB's current course catalog. 
 
 ![Planning assistant](assets/screenshots/08-planning-assistant.jpg)
 
