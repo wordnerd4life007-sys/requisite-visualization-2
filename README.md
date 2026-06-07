@@ -41,13 +41,13 @@ Autocomplete-style results make it easy to jump directly into a course and load 
 
 The graph shows prerequisite and dependent relationships as a structured course network, with controls for direction, depth, and layout.
 
-![Prerequisite graph view](assets/screenshots/03-prerequisite-graph.jpg)
+![Prerequisite graph view](assets/screenshots/04-course-hover-card.jpg)
 
 ### Inspect Course Relationships
 
 Click or hover through nodes to inspect course details without losing the graph context. The sidebar keeps selected-course information, prerequisite groups, and dependents readable.
 
-![Course hover card and sidebar details](assets/screenshots/04-course-hover-card.jpg)
+![Course hover card and sidebar details](assets/screenshots/hover_demo.png)
 
 ### Expand The Course Network
 
