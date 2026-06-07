@@ -29,7 +29,7 @@ Document setup commands, runtime options, current limitations, backend API start
 
 Do not describe planned behavior as implemented. Mark roadmap, limitations, and open decisions clearly.
 
-Avoid duplicating long lane procedures in `AGENTS.md`. Keep universal safety and routing there; keep task-specific workflows in repo-local skills under `.codex/skills/`.
+Avoid duplicating long lane procedures in `AGENTS.md`. Keep universal safety and routing there; keep task-specific workflows in repo-local scoped `.agents/skills/` branches.
 
 ## Open Decisions To Capture
 

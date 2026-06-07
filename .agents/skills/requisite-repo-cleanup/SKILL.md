@@ -21,7 +21,7 @@ Read these sources when they are relevant:
 - `agent-builder/cleanup-coordinator.md` for the local coordinator gates and stop conditions.
 - `agent-builder/requisite-visualization-local-context.md` for current repo-specific cleanup context.
 - `agent-builder/cleanup-audit-planner.md`, `cleanup-implementer.md`, `cleanup-verifier.md`, `cleanup-reviewer.md`, and `cleanup-docs-curator.md` when running that stage.
-- Lane skills under `.codex/skills/` when an approved cleanup task touches backend, API, frontend, data import, tests, or docs.
+- Lane skills under scoped `.agents/skills/` branches when an approved cleanup task touches backend, API, frontend, data import, tests, or docs.
 
 Treat `agent-builder/agent-builder.md` and `agent-builder/good-practices.md` as read-only source references unless the user explicitly approves editing them.
 
@@ -122,7 +122,7 @@ npm run build
 For docs-only or workflow-only changes, validate structure, links, command spelling, and consistency with source contracts. For skill changes, run:
 
 ```powershell
-python "$env:USERPROFILE\.codex\skills\.system\skill-creator\scripts\quick_validate.py" .codex\skills\requisite-repo-cleanup
+python "$env:USERPROFILE\.codex\skills\.system\skill-creator\scripts\quick_validate.py" .agents\skills\requisite-repo-cleanup
 ```
 
 Review the actual diff after verification. Lead with blocking findings if any. Check scope control, generated-file hygiene, test coverage, misleading docs, and accidental exposure of local paths or secrets.

@@ -16,7 +16,7 @@ Use these loopback-only addresses unless the user asks otherwise:
 Prefer `postgres` data source for normal runtime. Use `csv` only when Docker/PostgreSQL is unavailable or the user wants a fast local fallback:
 
 ```powershell
-.\.codex\skills\requisite-run-stack\scripts\start-requisite-stack.ps1 -DataSource csv
+.\.agents\skills\requisite-run-stack\scripts\start-requisite-stack.ps1 -DataSource csv
 ```
 
 ## Workflow
@@ -26,14 +26,14 @@ Prefer `postgres` data source for normal runtime. Use `csv` only when Docker/Pos
 3. Use the bundled script for the normal start-to-finish path:
 
 ```powershell
-.\.codex\skills\requisite-run-stack\scripts\start-requisite-stack.ps1
+.\.agents\skills\requisite-run-stack\scripts\start-requisite-stack.ps1
 ```
 
 4. If ports are blocked, inspect the reported listener process names. Only clean up stale local dev listeners. Do not stop unrelated services just because they use the preferred port.
 5. To remove stale listeners on the preferred API/frontend ports, rerun with:
 
 ```powershell
-.\.codex\skills\requisite-run-stack\scripts\start-requisite-stack.ps1 -ForcePortCleanup
+.\.agents\skills\requisite-run-stack\scripts\start-requisite-stack.ps1 -ForcePortCleanup
 ```
 
 6. Report the final URLs and log paths. If a service fails, summarize the failing command and the relevant log path without printing `.env` contents or secret values.
@@ -57,19 +57,19 @@ The script is conservative about port cleanup. Without `-ForcePortCleanup`, it r
 Choose alternate ports when the preferred ports are intentionally occupied:
 
 ```powershell
-.\.codex\skills\requisite-run-stack\scripts\start-requisite-stack.ps1 -ApiPort 18080 -FrontendPort 15173
+.\.agents\skills\requisite-run-stack\scripts\start-requisite-stack.ps1 -ApiPort 18080 -FrontendPort 15173
 ```
 
 Start with CSV data, skipping Docker:
 
 ```powershell
-.\.codex\skills\requisite-run-stack\scripts\start-requisite-stack.ps1 -DataSource csv
+.\.agents\skills\requisite-run-stack\scripts\start-requisite-stack.ps1 -DataSource csv
 ```
 
 Skip process startup and only check current listeners and HTTP health:
 
 ```powershell
-.\.codex\skills\requisite-run-stack\scripts\start-requisite-stack.ps1 -CheckOnly
+.\.agents\skills\requisite-run-stack\scripts\start-requisite-stack.ps1 -CheckOnly
 ```
 
 ## Failure Handling

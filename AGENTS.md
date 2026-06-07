@@ -107,40 +107,7 @@ Before major refactors or migrations:
 - Do not push broken mid-task work unless the user explicitly asks for a checkpoint push.
 - Keep commits focused. Stage only files that belong to the milestone, avoid unrelated worktree changes, and include a short commit summary describing what changed.
 - Before every commit or push, re-run `git status --short --branch` and review the staged diff so secrets, generated data, cache files, and unrelated changes are not included.
-
-## Rate-Limit Pause And Handoff
-
-If Codex usage, credit, or rate-limit remaining reaches 10% or lower, all agents must pause project work and preserve progress for after limits reset.
-
-Trigger conditions:
-
-- The Codex Usage panel, `/status`, CLI/app warning, or parent coordinator reports 10% or less remaining usage/credits.
-- A rate-limit or credit exhaustion warning appears and continuing could strand partial work.
-- A `429`, `Too Many Requests`, or `rate limit reached` response occurs during agent work.
-
-Required behavior:
-
-- Stop spawning or messaging subagents.
-- Do not start new implementation work, broad searches, dependency installs, builds, test suites, generated-data refreshes, or Docker/database operations.
-- Finish only the smallest safe atomic action already in progress, such as completing the current file write if stopping mid-write would corrupt a file.
-- Do not repeatedly retry rate-limited requests. Back off and wait for the reset instead of burning remaining quota.
-- Avoid committing or pushing automatically unless the user explicitly asked for that before the pause.
-
-Progress preservation steps:
-
-1. Run `git status --short` if possible.
-2. Capture the active lane, current task, files changed, commands already run, verification state, blockers, and exact next step.
-3. If enough quota remains for one small write, create or update `AGENT_HANDOFF.md` at the repo root with the handoff template below. This file is a temporary working note for resuming after reset.
-4. If there is not enough quota for a file write, put the same handoff content in the final response.
-5. Tell the user work is paused because the remaining Codex limit is at or below 10%, and recommend resuming the same thread with `/resume` after reset. If the thread is large, recommend `/compact` before resuming.
-
-Handoff template:
-
-```md
-# Agent Handoff
-
-Paused because Codex remaining usage was at or below 10%.
-
+  
 ## Active Lane
 
 - Lane:
@@ -316,18 +283,18 @@ Role-based coordination skills are installed under `.agents/skills/`:
 - Use `.agents/skills/taskforce-orchestrator/SKILL.md` only when the user explicitly asks for multi-agent, delegated, parallel, or role-based work.
 - Use `.agents/skills/scout/SKILL.md`, `.agents/skills/architect/SKILL.md`, `.agents/skills/implementer/SKILL.md`, `.agents/skills/verifier/SKILL.md`, `.agents/skills/reviewer/SKILL.md`, and `.agents/skills/integrator/SKILL.md` for generic role responsibilities and output formats.
 
-Lane-specific procedures are installed under `.codex/skills/`. After the persistent `AGENTS.md` skim, open the matching skill before editing in that lane.
+Lane-specific procedures are installed as scoped `.agents/skills/` branches. After the persistent `AGENTS.md` skim, open the matching skill before editing in that lane.
 
-- Lane 1, Backend Graph And Catalog: `.codex/skills/requisite-backend-graph/SKILL.md`
-- Lane 2, Database And Import Pipeline: `.codex/skills/requisite-catalog-import/SKILL.md`
-- Lane 3, API And Integration Boundary: `.codex/skills/requisite-api-contracts/SKILL.md`
-- Lane 4, Frontend Visualization: `.codex/skills/requisite-frontend-graph/SKILL.md`
-- Lane 5, Testing And Dev Experience: `.codex/skills/requisite-test-devex/SKILL.md`
-- Lane 6, Documentation And Product Decisions: `.codex/skills/requisite-docs-sync/SKILL.md`
-- Local Stack Runner: `.codex/skills/requisite-run-stack/SKILL.md`
-- Repo Cleanup: `.codex/skills/requisite-repo-cleanup/SKILL.md`
+- Lane 1, Backend Graph And Catalog: `backend/.agents/skills/requisite-backend-graph/SKILL.md`
+- Lane 2, Database And Import Pipeline: `scripts/.agents/skills/requisite-catalog-import/SKILL.md`
+- Lane 3, API And Integration Boundary: `backend/api/.agents/skills/requisite-api-contracts/SKILL.md`
+- Lane 4, Frontend Visualization: `frontend/.agents/skills/requisite-frontend-graph/SKILL.md`
+- Lane 5, Testing And Dev Experience: `tests/.agents/skills/requisite-test-devex/SKILL.md`
+- Lane 6, Documentation And Product Decisions: `docs/.agents/skills/requisite-docs-sync/SKILL.md`
+- Local Stack Runner: `.agents/skills/requisite-run-stack/SKILL.md`
+- Repo Cleanup: `.agents/skills/requisite-repo-cleanup/SKILL.md`
 
-If a task crosses lanes, identify the handoff point and use each relevant skill in dependency order. Keep universal safety, git, rate-limit, and routing rules in this file; keep role workflows in `.agents/skills/` and detailed lane workflows in `.codex/skills/`.
+If a task crosses lanes, identify the handoff point and use each relevant skill in dependency order. Keep universal safety, git, rate-limit, and routing rules in this file; keep role workflows in root `.agents/skills/` and detailed lane workflows in the narrowest scoped `.agents/skills/` branch.
 
 ## Multi-Agent And Parallel Work
 
