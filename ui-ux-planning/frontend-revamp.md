@@ -1,6 +1,6 @@
 # Frontend UI/UX Revamp Plan
 
-Planning artifact for a complete UI/UX revamp of the `requisite-visualization` frontend. This is intentionally separate from `graph-rework.md`, which remains focused on graph layout and graph-specific orchestration.
+Planning artifact for a complete UI/UX revamp of the `requisite-visualization` frontend.
 
 This plan uses the `ui-ux-pro-max` design-system search with the query:
 

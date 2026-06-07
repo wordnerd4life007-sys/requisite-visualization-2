@@ -30,7 +30,6 @@ Current state:
 - The C++ backend defaults to `API_DATA_SOURCE=postgres`, snapshots imported PostgreSQL data into an in-memory catalog/graph, and serves a local read-only API through `backend/src/api/HttpServer.cpp`.
 - `API_DATA_SOURCE=csv` remains available for tests and local fallback work, reading `backend/data/courses.csv` or `COURSES_CSV_PATH`.
 - PostgreSQL schema, Docker Compose setup, and an import script are part of the runtime data path after CSV generation.
-- The executable in `backend/src/main.cpp` is currently a demo/test harness, not the final app runtime.
 - `backend/api/API_STRATEGY.md` defines the implemented first-pass JSON contracts, including `/paths`, and remaining roadmap tradeoffs.
 - `frontend/` is a Vite React + TypeScript course explorer using Cytoscape and backend `fetch()` calls during normal runtime.
 - `scripts/generate_courses_csv.py` fetches UCSB Coursedog data and writes the current all-UCSB CSV with college, subject, and department metadata.
@@ -141,13 +140,13 @@ Before major refactors or migrations:
 
 Use PowerShell-compatible commands on Windows.
 
-Build C++ backend:
+Build C++ API server:
 
 ```powershell
 mingw32-make
 ```
 
-Build C++ API server:
+Build C++ API server explicitly:
 
 ```powershell
 mingw32-make api
@@ -157,12 +156,6 @@ Run local API server:
 
 ```powershell
 .\build\requisite-api.exe
-```
-
-Run current demo executable:
-
-```powershell
-.\build\requisite-visualization.exe
 ```
 
 Run C++ graph tests:
@@ -250,7 +243,6 @@ Important files:
 - `backend/include/Graph.h`: graph API, shortest-path compatibility wrapper, and grouped prerequisite access.
 - `backend/include/PrerequisiteParser.h` and `backend/src/PrerequisiteParser.cpp`: grouped prerequisite parser.
 - `backend/src/Graph.cpp`: CSV loading, graph construction, and BFS traversal.
-- `backend/src/main.cpp`: demo executable with hardcoded path checks.
 - `backend/src/DatabaseConfig.cpp`: reads and validates DB config but does not connect to PostgreSQL.
 - `backend/api/API_STRATEGY.md`: implemented read-only API contracts and integration boundary.
 - `backend/db/migrations/001_initial_schema.sql`: schema for courses and grouped prerequisites.
@@ -259,8 +251,6 @@ Important files:
 - `scripts/generate_courses_csv.py`: UCSB catalog fetch, metadata extraction, and prerequisite parser.
 - `scripts/import_courses_to_postgres.py`: dry-run and SQL-output capable CSV import script.
 - `frontend/`: Vite React + TypeScript explorer with Cytoscape graph visualization and backend API fetches.
-- `frontend/src/data/mockCatalog.ts`: development fixture only; normal runtime should not import it.
-- `docs/prompts/connect-api-frontend-agents.md`: historical/adaptation reference for the completed API/frontend/catalog integration push.
 
 Known project facts from the planning pass:
 
@@ -300,7 +290,7 @@ If a task crosses lanes, identify the handoff point and use each relevant skill 
 
 For role-based multi-agent work, use `$taskforce-orchestrator`. Do not restate generic Scout/Architect/Implementer/Verifier/Reviewer/Integrator responsibilities here; those live in `.agents/skills/`.
 
-When assigning parallel work, split by the lane skills above and avoid overlapping write scopes. `docs/prompts/connect-api-frontend-agents.md` is a historical/adaptation reference for similar large integration work, not a current required workflow.
+When assigning parallel work, split by the lane skills above and avoid overlapping write scopes.
 
 ## Cross-Lane Coordination Rules
 

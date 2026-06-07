@@ -22,7 +22,7 @@ Primary files:
 
 ## Runtime Rules
 
-Normal runtime must use backend `fetch()` calls. `frontend/src/data/mockCatalog.ts` may be used only in tests or clearly labeled development-only paths.
+Normal runtime must use backend `fetch()` calls. Frontend fixtures, when needed, should live in test-scoped files rather than the production runtime tree.
 
 Clicking a graph node should select the course and fetch fresh backend detail when needed.
 

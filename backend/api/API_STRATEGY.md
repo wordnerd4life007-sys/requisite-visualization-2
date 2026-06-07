@@ -200,5 +200,5 @@ Error response:
 
 - Lane 1 should provide stable in-memory queries for direct prerequisites, recursive prerequisites, dependents, graph neighborhoods, and shortest path reconstruction.
 - Lane 2 should keep PostgreSQL import behavior aligned with grouped prerequisite responses and external prerequisite flags.
-- Lane 4 should keep normal runtime on `fetch()` calls and use `frontend/src/data/mockCatalog.ts` only as a development fixture if needed.
+- Lane 4 should keep normal runtime on `fetch()` calls. Frontend fixtures, when needed, should live in test-scoped files rather than the production runtime tree.
 - Lane 5 should keep API smoke and catalog contract tests aligned with these response contracts.

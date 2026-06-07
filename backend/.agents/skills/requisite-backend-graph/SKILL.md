@@ -46,7 +46,6 @@ Use the smallest relevant checks first:
 ```powershell
 mingw32-make
 mingw32-make test-cpp
-.\build\requisite-visualization.exe
 ```
 
 If API-facing graph output changes, also run the API smoke checks that exercise the changed contract.

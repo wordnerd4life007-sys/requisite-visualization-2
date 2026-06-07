@@ -56,7 +56,7 @@ The API preserves grouped prerequisite semantics with `groupType` and `groupInde
 
 ## Frontend
 
-`frontend/` is a Vite React + TypeScript app using Cytoscape for graph visualization. It uses `fetch()` through `frontend/src/api/client.ts`; normal runtime does not import `frontend/src/data/mockCatalog.ts`.
+`frontend/` is a Vite React + TypeScript app using Cytoscape for graph visualization. It uses `fetch()` through `frontend/src/api/client.ts` during normal runtime.
 
 Implemented UI behavior:
 

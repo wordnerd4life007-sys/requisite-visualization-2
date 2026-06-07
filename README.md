@@ -18,9 +18,8 @@
 - PostgreSQL is the default API runtime source after importing the generated CSV.
 - The C++ API server defaults to `API_DATA_SOURCE=postgres`, snapshots PostgreSQL data into memory at startup, and serves local read-only endpoints from `backend/src/api/HttpServer.cpp`.
 - `API_DATA_SOURCE=csv` remains available for tests and local fallback work.
-- `frontend/` is a Vite React + TypeScript app that uses backend `fetch()` calls during normal runtime. It does not use `frontend/src/data/mockCatalog.ts` in normal runtime.
+- `frontend/` is a Vite React + TypeScript app that uses backend `fetch()` calls during normal runtime.
 - The frontend includes an unofficial local-only planning assistant. Students can manually add completed/current/planned courses or paste course-history text, and the selected-course prerequisite readiness is evaluated in the browser against loaded API prerequisite groups.
-- `backend/src/main.cpp` is still a small demo executable separate from the API server.
 
 ## Demo
 
@@ -100,11 +99,11 @@ More detail:
 ```text
 backend/
   include/        C++ graph, parser, database, and API model headers
-  src/            C++ graph, parser, API server, catalog adapters, and demo entrypoint
+  src/            C++ graph, parser, API server, and catalog adapters
   api/            API strategy and contract documentation
   data/           Generated catalog artifacts
   db/             PostgreSQL migrations and seed data
-docs/             Architecture, data-quality, prompts, and planning notes
+docs/             Architecture and data-quality notes
 frontend/         Vite React + TypeScript course explorer
 scripts/          Catalog generation, import, migration, and local helper scripts
 tests/            C++, Python, and API smoke tests
@@ -143,17 +142,16 @@ Copy-Item .env.example .env
 
 Edit `.env` for local PostgreSQL values before starting Docker. Do not commit `.env`.
 
-Build the backend demo and API:
+Build the C++ API server:
 
 ```powershell
 mingw32-make
-mingw32-make api
 ```
 
 If PostgreSQL is installed somewhere else, override `PG_ROOT`:
 
 ```powershell
-mingw32-make api PG_ROOT=C:/Path/To/PostgreSQL/18
+mingw32-make PG_ROOT=C:/Path/To/PostgreSQL/18
 ```
 
 Start local PostgreSQL and apply the migrations. The migration command matters for existing Docker volumes because Postgres init scripts only run when the volume is first created.
@@ -266,7 +264,7 @@ Frontend browser smoke after UI changes:
 
 - Keep changes small and scoped to one lane when possible: backend graph/catalog, database/import, API boundary, frontend visualization, testing/dev experience, or docs/product decisions.
 - Treat `backend/data/courses.csv` as generated but intentionally tracked; regenerate it only for catalog/import work.
-- Keep frontend normal runtime on backend `fetch()` calls. `frontend/src/data/mockCatalog.ts` is a development fixture, not the production data source.
+- Keep frontend normal runtime on backend `fetch()` calls. Test fixtures should stay in test-scoped files, not in the production runtime tree.
 - Run the checks that match the touched lane before committing or handing off work.
 - Do not commit `.env`, generated noise, build artifacts, or unrelated local changes.
 
