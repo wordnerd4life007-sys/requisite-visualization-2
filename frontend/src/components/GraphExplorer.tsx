@@ -207,6 +207,7 @@ function GraphExplorer({
           groupIndex: edge.groupIndex,
           groupColor: isPrerequisiteEdge ? groupColor(edge.groupIndex, theme) : '',
           groupKey: isPrerequisiteEdge ? graphGroupKey(edge) : '',
+          groupLabel: isPrerequisiteEdge ? graphGroupLabel(edge) : '',
           external: edge.external ?? false,
         },
       };
@@ -380,6 +381,22 @@ function GraphExplorer({
           style: {
             opacity: 0.34,
             width: '2.2px',
+          },
+        },
+        {
+          selector: 'edge.is-selected-prerequisite, edge.is-hover-prerequisite, edge.is-focused',
+          style: {
+            color: theme.nodeText,
+            'font-size': '9px',
+            'font-weight': 800,
+            label: 'data(groupLabel)',
+            'min-zoomed-font-size': '5px',
+            'text-background-color': theme.nodeTextOutline,
+            'text-background-opacity': 0.86,
+            'text-background-padding': '3px',
+            'text-background-shape': 'roundrectangle',
+            'text-margin-y': '-8px',
+            'text-rotation': 'autorotate',
           },
         },
         {
@@ -735,10 +752,23 @@ function GraphExplorer({
           width: `${structuredLayout.width}px`,
         }
       : undefined;
+  const laneLabels =
+    layoutMode === 'structured'
+      ? graphLaneLabels(graph, structuredLayout)
+      : [];
 
   return (
     <div className="graph-stage" ref={stageRef}>
       <div className="graph-scroll" ref={scrollRef}>
+        {laneLabels.length > 0 ? (
+          <div className="graph-lanes" aria-hidden="true" style={canvasStyle}>
+            {laneLabels.map((lane) => (
+              <span className={`graph-lane-label ${lane.className}`} key={lane.key} style={{ left: lane.left }}>
+                {lane.label}
+              </span>
+            ))}
+          </div>
+        ) : null}
         <div className="graph-canvas" ref={containerRef} style={canvasStyle} />
       </div>
 
@@ -760,11 +790,11 @@ function GraphExplorer({
       <div className="graph-legend" aria-label="Graph legend">
         <span>
           <i className="legend-line required" />
-          Required
+          Required: all courses
         </span>
         <span>
           <i className="legend-line alternative" />
-          Alternative
+          Choose 1 alternative
         </span>
         <span>
           <i className="legend-node external" />
@@ -905,8 +935,58 @@ function graphGroupKey(edge: GraphResponse['edges'][number]): string {
   return `${edge.groupType}:${edge.groupIndex}`;
 }
 
+function graphGroupLabel(edge: GraphResponse['edges'][number]): string {
+  return edge.groupType === 'any' ? 'choose 1' : 'required';
+}
+
 function isIncidentToCourse(edge: GraphResponse['edges'][number], courseId: string): boolean {
   return Boolean(courseId) && (edge.from === courseId || edge.to === courseId);
+}
+
+interface GraphLaneLabel {
+  className: string;
+  key: string;
+  label: string;
+  left: string;
+}
+
+function graphLaneLabels(graph: GraphResponse, layout: GraphLayout): GraphLaneLabel[] {
+  const root = layout.positions.get(graph.rootCourseId);
+
+  if (!root || layout.width <= 0) {
+    return [];
+  }
+
+  const labels: GraphLaneLabel[] = [];
+  const hasPrerequisites = graph.edges.some((edge) => edge.relationship === 'prerequisite');
+  const hasDependents = graph.edges.some((edge) => edge.relationship === 'dependent');
+
+  if (hasPrerequisites) {
+    labels.push({
+      className: 'is-prerequisites',
+      key: 'prerequisites',
+      label: 'Prerequisites',
+      left: `${Math.max(18, root.x / 2)}px`,
+    });
+  }
+
+  labels.push({
+    className: 'is-root',
+    key: 'root',
+    label: 'Selected course',
+    left: `${root.x}px`,
+  });
+
+  if (hasDependents) {
+    labels.push({
+      className: 'is-dependents',
+      key: 'dependents',
+      label: 'Unlocked courses',
+      left: `${Math.min(layout.width - 18, root.x + (layout.width - root.x) / 2)}px`,
+    });
+  }
+
+  return labels;
 }
 
 interface HiddenPrerequisitePreviewResult {
