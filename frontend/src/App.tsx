@@ -80,7 +80,7 @@ function App() {
     typeof window === 'undefined' ? 'light' : loadThemeMode(),
   );
   const [query, setQuery] = useState('');
-  const [resultsOpen, setResultsOpen] = useState(false);
+  const [resultsOpen, setResultsOpen] = useState(true);
   const [subject, setSubject] = useState('all');
   const [selectedColleges, setSelectedColleges] = useState<string[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(initialCourseId);
